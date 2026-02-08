@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "command": {
+    "sync-rules": {
+      "description": "Sync minimal profile rules to AGENTS.md",
+      "template": "Run scripts/sync-agents.sh and report what changed.",
+      "agent": "build"
+    }
+  }
+}
