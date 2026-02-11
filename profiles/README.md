@@ -14,7 +14,8 @@
 
 ## ファイル構成
 
-- `subagent-models.json`: 変更対象は基本この1ファイル
+- `model-tiers.json`: Tierごとの具体モデル定義
+- `subagent-registry.json`: サブエージェントの役割/Tier/プロファイル割り当て
 - `generate-configs.mjs`: プロファイル設定を自動生成
 - `switch-profile.sh`: 有効化プロファイル切替
 - `ohmy/opencode.json`
@@ -23,19 +24,25 @@
 
 ## 使い方
 
-1. モデル割り当てを変更
+1. Tierモデルを変更
 
 ```bash
-vim ~/.config/opencode/profiles/subagent-models.json
+vim ~/.config/opencode/profiles/model-tiers.json
 ```
 
-2. 設定を再生成
+2. サブエージェント割り当てを変更
+
+```bash
+vim ~/.config/opencode/profiles/subagent-registry.json
+```
+
+3. 設定を再生成
 
 ```bash
 node ~/.config/opencode/profiles/generate-configs.mjs
 ```
 
-3. プロファイルを適用
+4. プロファイルを適用
 
 ```bash
 # oh-my-opencode を使う
@@ -45,7 +52,7 @@ node ~/.config/opencode/profiles/generate-configs.mjs
 ~/.config/opencode/profiles/switch-profile.sh vanilla
 ```
 
-4. `ocm` で切り替え（推奨）
+5. `ocm` で切り替え（推奨）
 
 ```bash
 # 現在状態を確認
@@ -66,3 +73,4 @@ ocm regen
 
 - 既存設定は `~/.config/opencode/backups/` に自動バックアップされます。
 - `vanilla` 適用時は `oh-my-opencode.json` を削除しません（保持のみ）。
+- サブエージェントの追加・変更は `subagent-profile-manager` skill を推奨します。

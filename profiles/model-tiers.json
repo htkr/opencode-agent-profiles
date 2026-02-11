@@ -1,0 +1,14 @@
+{
+  "tiers": {
+    "tier1": "openai/gpt-5.3-codex",
+    "tier2": "openai/gpt-5.1-codex-mini",
+    "tier3": "github-copilot/gpt-5-mini"
+  },
+  "main": {
+    "default_tier": "tier1",
+    "alternatives": [
+      "github-copilot/claude-sonnet-4.5",
+      "github-copilot/claude-opus-4.5"
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "opencode_agents": {
+    "exp-orchestrator": {
+      "description": "Experiment workflow orchestration",
+      "mode": "subagent",
+      "tier": "tier1",
+      "profiles": [
+        "vanilla",
+        "ohmy"
+      ]
+    },
+    "exp-runner": {
+      "description": "Experiment implementation and execution",
+      "mode": "subagent",
+      "tier": "tier1",
+      "profiles": [
+        "vanilla",
+        "ohmy"
+      ]
+    },
+    "exp-reporter": {
+      "description": "Experiment report generation",
+      "mode": "subagent",
+      "tier": "tier3",
+      "profiles": [
+        "vanilla",
+        "ohmy"
+      ]
+    },
+    "exp-indexer": {
+      "description": "Experiment master index updates",
+      "mode": "subagent",
+      "tier": "tier3",
+      "profiles": [
+        "vanilla",
+        "ohmy"
+      ]
+    },
+    "explore-light": {
+      "description": "Fast codebase exploration",
+      "mode": "subagent",
+      "tier": "tier3",
+      "profiles": [
+        "vanilla"
+      ]
+    },
+    "summarize-light": {
+      "description": "Quick summaries and triage",
+      "mode": "subagent",
+      "tier": "tier3",
+      "profiles": [
+        "vanilla"
+      ]
+    },
+    "analyze-medium": {
+      "description": "Medium-complexity analysis",
+      "mode": "subagent",
+      "tier": "tier2",
+      "profiles": [
+        "vanilla"
+      ]
+    }
+  },
+  "ohmy_agents": {
+    "oracle": {
+      "tier": "tier2"
+    },
+    "librarian": {
+      "tier": "tier3"
+    },
+    "explore": {
+      "tier": "tier3"
+    },
+    "prometheus": {
+      "tier": "tier2"
+    },
+    "metis": {
+      "tier": "tier2"
+    },
+    "momus": {
+      "tier": "tier2"
+    },
+    "atlas": {
+      "tier": "tier2"
+    }
+  },
+  "ohmy_categories": {
+    "quick": {
+      "tier": "tier3"
+    },
+    "writing": {
+      "tier": "tier3"
+    },
+    "unspecified-low": {
+      "tier": "tier2"
+    },
+    "unspecified-high": {
+      "tier": "tier2"
+    },
+    "ultrabrain": {
+      "tier": "tier1",
+      "variant": "xhigh"
+    },
+    "deep": {
+      "tier": "tier1",
+      "variant": "medium"
+    }
+  }
+}

@@ -5,10 +5,12 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const modelsPath = path.join(__dirname, "subagent-models.json");
+const tiersPath = path.join(__dirname, "model-tiers.json");
+const registryPath = path.join(__dirname, "subagent-registry.json");
 const profilesDir = __dirname;
 
-const models = JSON.parse(fs.readFileSync(modelsPath, "utf8"));
+const tiersConfig = JSON.parse(fs.readFileSync(tiersPath, "utf8"));
+const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
 const keybinds = {
   input_submit: "shift+return",
@@ -21,57 +23,92 @@ const provider = {
   }
 };
 
-const commonMainModel = models.main.default;
+const tiers = tiersConfig.tiers || {};
 
-const experimentAgents = {
-  "exp-orchestrator": {
-    mode: "subagent",
-    description: "Experiment workflow orchestration",
-    model: models.subagents.exp_orchestrator
-  },
-  "exp-runner": {
-    mode: "subagent",
-    description: "Experiment implementation and execution",
-    model: models.subagents.exp_runner
-  },
-  "exp-reporter": {
-    mode: "subagent",
-    description: "Experiment report generation",
-    model: models.subagents.exp_reporter
-  },
-  "exp-indexer": {
-    mode: "subagent",
-    description: "Experiment master index updates",
-    model: models.subagents.exp_indexer
+function resolveTier(tierName) {
+  const model = tiers[tierName];
+  if (!model) {
+    throw new Error(`Unknown tier: ${tierName}`);
   }
-};
+  return model;
+}
+
+function buildOpencodeAgents(profileName) {
+  const out = {};
+  const defs = registry.opencode_agents || {};
+
+  for (const [name, def] of Object.entries(defs)) {
+    const profiles = Array.isArray(def.profiles) ? def.profiles : ["vanilla", "ohmy"];
+    if (!profiles.includes(profileName)) continue;
+    if (!def.description) {
+      throw new Error(`Missing description for opencode agent: ${name}`);
+    }
+    if (!def.tier) {
+      throw new Error(`Missing tier for opencode agent: ${name}`);
+    }
+
+    out[name] = {
+      mode: def.mode || "subagent",
+      description: def.description,
+      model: resolveTier(def.tier)
+    };
+  }
+
+  return out;
+}
+
+function buildOhmyAgents() {
+  const out = {};
+  const defs = registry.ohmy_agents || {};
+
+  for (const [name, def] of Object.entries(defs)) {
+    if (!def.tier) {
+      throw new Error(`Missing tier for oh-my-opencode agent: ${name}`);
+    }
+    out[name] = {
+      model: resolveTier(def.tier)
+    };
+  }
+
+  return out;
+}
+
+function buildOhmyCategories() {
+  const out = {};
+  const defs = registry.ohmy_categories || {};
+
+  for (const [name, def] of Object.entries(defs)) {
+    if (!def.tier) {
+      throw new Error(`Missing tier for oh-my-opencode category: ${name}`);
+    }
+    out[name] = {
+      model: resolveTier(def.tier)
+    };
+
+    if (def.variant) {
+      out[name].variant = def.variant;
+    }
+  }
+
+  return out;
+}
+
+const commonMainModel = resolveTier(tiersConfig.main.default_tier);
+
+const vanillaAgents = buildOpencodeAgents("vanilla");
+const ohmyAgents = buildOpencodeAgents("ohmy");
 
 const ohmyConfig = {
   $schema: "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   google_auth: false,
-  agents: {
-    oracle: { model: models.subagents.oracle },
-    librarian: { model: models.subagents.librarian },
-    explore: { model: models.subagents.explore },
-    prometheus: { model: models.subagents.prometheus },
-    metis: { model: models.subagents.metis },
-    momus: { model: models.subagents.momus },
-    atlas: { model: models.subagents.atlas }
-  },
+  agents: buildOhmyAgents(),
   sisyphus_agent: {
     disabled: false,
     default_builder_enabled: false,
     planner_enabled: true,
     replace_plan: true
   },
-  categories: {
-    quick: { model: models.categories.quick },
-    writing: { model: models.categories.writing },
-    "unspecified-low": { model: models.categories["unspecified-low"] },
-    "unspecified-high": { model: models.categories["unspecified-high"] },
-    ultrabrain: { model: models.categories.ultrabrain, variant: "xhigh" },
-    deep: { model: models.categories.deep, variant: "medium" }
-  }
+  categories: buildOhmyCategories()
 };
 
 const opencodeOhmy = {
@@ -81,7 +118,7 @@ const opencodeOhmy = {
   provider,
   plugin: ["opencode-antigravity-auth@latest", "oh-my-opencode@latest"],
   agent: {
-    ...experimentAgents
+    ...ohmyAgents
   }
 };
 
@@ -98,22 +135,7 @@ const opencodeVanilla = {
     plan: {
       mode: "primary"
     },
-    "explore-light": {
-      mode: "subagent",
-      description: "Fast codebase exploration",
-      model: models.subagents.explore
-    },
-    "summarize-light": {
-      mode: "subagent",
-      description: "Quick summaries and triage",
-      model: models.subagents.librarian
-    },
-    "analyze-medium": {
-      mode: "subagent",
-      description: "Medium-complexity analysis",
-      model: models.subagents.oracle
-    },
-    ...experimentAgents
+    ...vanillaAgents
   }
 };
 

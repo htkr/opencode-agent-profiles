@@ -36,12 +36,18 @@ docs -> /home/htk/project/opencode-agent-profiles/docs
 
 ## Included
 
-- `profiles/subagent-models.json`: single source of truth for model assignments
-- `profiles/generate-configs.mjs`: regenerates profile configs from `subagent-models.json`
+- `profiles/model-tiers.json`: single source of truth for Tier-to-model mapping
+- `profiles/subagent-registry.json`: agent role/tier/profile registry
+- `profiles/generate-configs.mjs`: regenerates profile configs from Tier and registry
 - `profiles/switch-profile.sh`: applies `ohmy` or `vanilla` profile to `~/.config/opencode`
 - `profiles/ohmy/*`: generated profile for oh-my-opencode
 - `profiles/vanilla/*`: generated profile for OpenCode only
 - `docs/*`: shared docs moved from `/home/htk/project/test/docs`
+
+Subagent docs:
+
+- `docs/subagent-management-guide.md`
+- `docs/subagent-usage-guide.md`
 
 ## Usage
 
