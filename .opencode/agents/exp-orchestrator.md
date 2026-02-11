@@ -24,3 +24,4 @@ Delegate report writing to `exp-reporter`.
 Delegate master index updates to `exp-indexer`.
 
 Keep user-facing updates concise and include current experiment id.
+Do not rely on OS desktop notifications; report progress in chat messages only.

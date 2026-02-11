@@ -42,7 +42,7 @@
 - 主な責務:
   - `exp-kaggle-runbook` のロード
   - `exp-runner` / `exp-reporter` / `exp-indexer` への委譲
-  - ユーザへの進捗通知（`exp_id` を必ず含める）
+  - ユーザへの進捗報告（`exp_id` を必ず含める、OS通知は使わない）
 - 非責務:
   - 詳細実装そのもの（runnerへ委譲）
 
