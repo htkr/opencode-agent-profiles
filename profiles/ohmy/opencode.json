@@ -12,7 +12,8 @@
   },
   "plugin": [
     "opencode-antigravity-auth@latest",
-    "oh-my-opencode@latest"
+    "oh-my-opencode@latest",
+    "./.opencode/plugins/ask-user-question.js"
   ],
   "agent": {
     "exp-orchestrator": {

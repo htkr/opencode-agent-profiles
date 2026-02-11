@@ -116,7 +116,7 @@ const opencodeOhmy = {
   model: commonMainModel,
   keybinds,
   provider,
-  plugin: ["opencode-antigravity-auth@latest", "oh-my-opencode@latest"],
+  plugin: ["opencode-antigravity-auth@latest", "oh-my-opencode@latest", "./.opencode/plugins/ask-user-question.js"],
   agent: {
     ...ohmyAgents
   }
@@ -127,7 +127,7 @@ const opencodeVanilla = {
   model: commonMainModel,
   keybinds,
   provider,
-  plugin: ["opencode-antigravity-auth@latest"],
+  plugin: ["opencode-antigravity-auth@latest", "./.opencode/plugins/ask-user-question.js"],
   agent: {
     build: {
       mode: "primary"

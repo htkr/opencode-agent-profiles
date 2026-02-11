@@ -14,6 +14,21 @@
 - Skill実体は `.opencode/skills/<skill-name>/SKILL.md`
 - 検証/ハッシュ更新は `scripts/skills/sync-anthropic-skills.mjs`
 - 用途別有効化は `.opencode/agents/*.md` の `permission.skill` で制御
+- 意思決定時の質問は `ask_user_question` tool を原則利用する
+
+## AskUserQuestion運用
+
+- plugin実体: `.opencode/plugins/ask-user-question.js`
+- 有効化は `profiles/generate-configs.mjs` で常時設定する
+- エージェント運用ルールは以下で管理する
+  - `.opencode/agents/kaggle-research.md`
+  - `.opencode/agents/game-dev-assistant.md`
+
+### ルール
+
+1. 意思決定が必要な場面では、原則 `ask_user_question` を使う。
+2. 選択肢は2〜6件で提示する。
+3. 推奨案がある場合は `recommended` を必ず指定する。
 
 ## 追加手順
 

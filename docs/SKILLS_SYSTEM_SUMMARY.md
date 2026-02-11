@@ -26,9 +26,22 @@
 - `.opencode/agents/kaggle-research.md`
   - `kaggle-*` と `core-*` を許可
   - `game-*` を拒否
+  - 意思決定時は `ask_user_question` を原則利用
 - `.opencode/agents/game-dev-assistant.md`
   - `game-*` と `core-*` を許可
   - `kaggle-*` を拒否
+  - 意思決定時は `ask_user_question` を原則利用
+
+## AskUserQuestion plugin
+
+- 実体: `.opencode/plugins/ask-user-question.js`
+- 提供tool: `ask_user_question`
+  - 引数: `question`, `options`, `recommended`, `context`
+  - `options` は2〜6件
+  - `recommended` は `options` 内の文字列と完全一致が必要
+- 常時有効化
+  - `profiles/generate-configs.mjs` で plugin配列へ追加
+  - 反映先: `profiles/vanilla/opencode.json`, `profiles/ohmy/opencode.json`
 
 ## 追加したSkill一覧
 

@@ -11,7 +11,8 @@
     }
   },
   "plugin": [
-    "opencode-antigravity-auth@latest"
+    "opencode-antigravity-auth@latest",
+    "./.opencode/plugins/ask-user-question.js"
   ],
   "agent": {
     "build": {
