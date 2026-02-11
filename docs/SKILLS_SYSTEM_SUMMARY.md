@@ -20,11 +20,16 @@
   - `.opencode/skills/<name>/SKILL.md`
 - 整合検証
   - `scripts/skills/sync-anthropic-skills.mjs`
+- Kaggle調査の取得経路
+  - 1st: `brave_*` でURL候補検索
+  - 2nd: `webfetch` で本文抽出
+  - fallback: `agent-browser` でJS描画ページを取得
 
 ## 追加したエージェント
 
 - `.opencode/agents/kaggle-research.md`
   - `kaggle-*` と `core-*` を許可
+  - `brave_*` を許可、`agent-browser` 実行を許可
   - `game-*` を拒否
   - 意思決定時は `ask_user_question` を原則利用
 - `.opencode/agents/game-dev-assistant.md`
@@ -136,6 +141,17 @@
 - 実行内容
   - `node scripts/skills/sync-anthropic-skills.mjs --write`
   - `node profiles/generate-configs.mjs`（必要時）
+
+## Kaggle skill統合方針（衝突回避）
+
+- `kaggle-research`
+  - 入口スキルとしてURL探索から要約までを担当。
+  - 本文欠落時は `kaggle-discussion-harvest` を明示的に呼ぶ。
+- `kaggle-discussion-harvest`（手動）
+  - 取得フォールバック専用に限定（分析は行わない）。
+  - `webfetch` 失敗時に `agent-browser` を使う設計。
+- `kaggle-cv-strategy-audit` と `kaggle-metric-alignment`
+  - 前者は分割設計、後者は指標乖離診断に責務を分離。
 
 ## プロファイル連携
 

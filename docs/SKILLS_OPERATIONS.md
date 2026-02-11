@@ -14,6 +14,22 @@
 - Skill実体は `.opencode/skills/<skill-name>/SKILL.md`
 - 検証/ハッシュ更新は `scripts/skills/sync-anthropic-skills.mjs`
 - 用途別有効化は `.opencode/agents/*.md` の `permission.skill` で制御
+
+## MCP/CLI前提（Kaggle調査）
+
+- Brave Search MCPを利用するため、`BRAVE_API_KEY` を環境変数に設定する。
+- JS描画ページ取得のため、`agent-browser` を事前導入する。
+
+```bash
+npm install -g agent-browser
+agent-browser install
+```
+
+- 依存不足で失敗する場合は次を実行する。
+
+```bash
+agent-browser install --with-deps
+```
 - 意思決定時の質問は `ask_user_question` tool を原則利用する
 
 ## AskUserQuestion運用
@@ -102,6 +118,7 @@ node profiles/generate-configs.mjs
    - `disable-model-invocation` の妥当性
    - ドメイン境界（`kaggle-*` / `game-*` / `core-*`）
    - エージェントの `permission.skill` ルール
+   - MCP前提手順（`brave_*` / `agent-browser`）の整合
 
 ## トラブルシュート
 

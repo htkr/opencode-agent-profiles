@@ -6,7 +6,7 @@
     "skills_doc_url": "https://code.claude.com/docs/en/skills.md",
     "selection_policy": "Curated for Kaggle and game development workflows"
   },
-  "updated_at": "2026-02-11T14:04:45.222Z",
+  "updated_at": "2026-02-11T14:49:56.681Z",
   "skills": [
     {
       "name": "core-code-review",
@@ -48,14 +48,14 @@
       "domain": "kaggle",
       "path": ".opencode/skills/kaggle-research/SKILL.md",
       "source_ref": "skills.md#add-supporting-files",
-      "sha256": "31612493997efd8642d23b653b2417ecbaa3038513de7b15545cf19b7cd6ae61"
+      "sha256": "85aba6149bbfc17f6d7b782e63a69626025c0027b66e0b7250d77923b0cb7dba"
     },
     {
       "name": "kaggle-discussion-harvest",
       "domain": "kaggle",
       "path": ".opencode/skills/kaggle-discussion-harvest/SKILL.md",
       "source_ref": "skills.md#control-who-invokes-a-skill",
-      "sha256": "3f0ba645b578e128f6cbeec9861b3e49821efa167f3d52db41b4cf791e4f1654"
+      "sha256": "2778593d98e8f4d9f92ffe59e3cd176f4fc5298d0dfc38143b5a1d772de792e6"
     },
     {
       "name": "kaggle-feature-ideation",
@@ -69,7 +69,7 @@
       "domain": "kaggle",
       "path": ".opencode/skills/kaggle-cv-strategy-audit/SKILL.md",
       "source_ref": "common-workflows.md",
-      "sha256": "cbe174f952961d08abb0005f2e90ebd6cec619ac950e0469b305fe60a8c30fb7"
+      "sha256": "825b59504140aa23188d46746fbc5cf7a627a2b6b034ad6a3cda3e00001c996d"
     },
     {
       "name": "kaggle-error-analysis",
@@ -90,7 +90,7 @@
       "domain": "kaggle",
       "path": ".opencode/skills/kaggle-metric-alignment/SKILL.md",
       "source_ref": "common-workflows.md",
-      "sha256": "e073d10e36da362d2f0e39234e0fcd7b807ff1777cadaaaeb4b81c7218c917b5"
+      "sha256": "8c546929a12ecf6e40c35283fda6b8e37ae6dee52f0ffa4bb0d32764d7342abf"
     },
     {
       "name": "kaggle-submission-checklist",

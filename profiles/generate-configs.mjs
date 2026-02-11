@@ -23,6 +23,34 @@ const provider = {
   }
 };
 
+const mcp = {
+  brave: {
+    type: "local",
+    command: ["npx", "-y", "@brave/brave-search-mcp-server"],
+    environment: {
+      BRAVE_API_KEY: "{env:BRAVE_API_KEY}"
+    },
+    enabled: true
+  }
+};
+
+const tools = {
+  "brave_*": false
+};
+
+const permission = {
+  skill: {
+    "*": "allow"
+  },
+  task: {
+    "*": "allow"
+  },
+  bash: {
+    "*": "ask",
+    "agent-browser *": "allow"
+  }
+};
+
 const tiers = tiersConfig.tiers || {};
 
 function resolveTier(tierName) {
@@ -116,6 +144,9 @@ const opencodeOhmy = {
   model: commonMainModel,
   keybinds,
   provider,
+  mcp,
+  tools,
+  permission,
   plugin: ["opencode-antigravity-auth@latest", "oh-my-opencode@latest", "./.opencode/plugins/ask-user-question.js"],
   agent: {
     ...ohmyAgents
@@ -127,6 +158,9 @@ const opencodeVanilla = {
   model: commonMainModel,
   keybinds,
   provider,
+  mcp,
+  tools,
+  permission,
   plugin: ["opencode-antigravity-auth@latest", "./.opencode/plugins/ask-user-question.js"],
   agent: {
     build: {

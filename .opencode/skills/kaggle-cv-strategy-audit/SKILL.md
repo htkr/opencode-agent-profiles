@@ -10,6 +10,9 @@ metadata:
 ## Goal
 LBに近い検証設計へ寄せる。
 
+## Scope
+このskillは分割設計に集中する。指標乖離の診断は `kaggle-metric-alignment` を使う。
+
 ## Output
 - Current CV risks
 - Better split candidates
