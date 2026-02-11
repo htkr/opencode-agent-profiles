@@ -23,6 +23,29 @@ const provider = {
 
 const commonMainModel = models.main.default;
 
+const experimentAgents = {
+  "exp-orchestrator": {
+    mode: "subagent",
+    description: "Experiment workflow orchestration",
+    model: models.subagents.exp_orchestrator
+  },
+  "exp-runner": {
+    mode: "subagent",
+    description: "Experiment implementation and execution",
+    model: models.subagents.exp_runner
+  },
+  "exp-reporter": {
+    mode: "subagent",
+    description: "Experiment report generation",
+    model: models.subagents.exp_reporter
+  },
+  "exp-indexer": {
+    mode: "subagent",
+    description: "Experiment master index updates",
+    model: models.subagents.exp_indexer
+  }
+};
+
 const ohmyConfig = {
   $schema: "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   google_auth: false,
@@ -56,7 +79,10 @@ const opencodeOhmy = {
   model: commonMainModel,
   keybinds,
   provider,
-  plugin: ["opencode-antigravity-auth@latest", "oh-my-opencode@latest"]
+  plugin: ["opencode-antigravity-auth@latest", "oh-my-opencode@latest"],
+  agent: {
+    ...experimentAgents
+  }
 };
 
 const opencodeVanilla = {
@@ -86,7 +112,8 @@ const opencodeVanilla = {
       mode: "subagent",
       description: "Medium-complexity analysis",
       model: models.subagents.oracle
-    }
+    },
+    ...experimentAgents
   }
 };
 

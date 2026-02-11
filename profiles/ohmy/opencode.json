@@ -13,5 +13,27 @@
   "plugin": [
     "opencode-antigravity-auth@latest",
     "oh-my-opencode@latest"
-  ]
+  ],
+  "agent": {
+    "exp-orchestrator": {
+      "mode": "subagent",
+      "description": "Experiment workflow orchestration",
+      "model": "openai/gpt-5.3-codex"
+    },
+    "exp-runner": {
+      "mode": "subagent",
+      "description": "Experiment implementation and execution",
+      "model": "openai/gpt-5.3-codex"
+    },
+    "exp-reporter": {
+      "mode": "subagent",
+      "description": "Experiment report generation",
+      "model": "github-copilot/gpt-5-mini"
+    },
+    "exp-indexer": {
+      "mode": "subagent",
+      "description": "Experiment master index updates",
+      "model": "github-copilot/gpt-5-mini"
+    }
+  }
 }

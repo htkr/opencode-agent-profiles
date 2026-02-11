@@ -6,7 +6,7 @@
 - `kaggle` は調査・実験向けに拡張する
 - `game` は最小設定だけ先に入れる
 - MCPは重いものを常時ONにしない（必要時ON）
-- SkillでMCP利用手順を明示して、エージェントの迷いを減らす
+- Skillで検索/抽出手順を明示して、エージェントの迷いを減らす
 
 ## 1) 推奨ディレクトリ構成
 
@@ -31,9 +31,9 @@
 ポイント:
 
 - `serena` と `context7` をベース採用
-- `chrome-devtools` は導入済みだが `enabled: false`（必要時ON）
+- 動的ページ取得は `agent-browser`（CLI）を使う
 - `tools` で重いMCPをグローバルOFF
-- `kaggle-research` サブエージェントでのみMCPを有効化
+- `kaggle-research` サブエージェントでのみ `agent-browser` 実行を許可
 
 ```json
 {
@@ -75,23 +75,10 @@
         "BRAVE_API_KEY": "{env:BRAVE_API_KEY}"
       },
       "enabled": true
-    },
-    "chrome-devtools": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "chrome-devtools-mcp@latest",
-        "--headless=true",
-        "--isolated=true",
-        "--no-usage-statistics"
-      ],
-      "enabled": false
     }
   },
   "tools": {
-    "brave_*": false,
-    "chrome-devtools_*": false
+    "brave_*": false
   },
   "permission": {
     "skill": {
@@ -99,6 +86,10 @@
     },
     "task": {
       "*": "allow"
+    },
+    "bash": {
+      "*": "deny",
+      "agent-browser *": "allow"
     }
   },
   "agent": {
@@ -110,19 +101,28 @@
         "webfetch": true,
         "websearch": true,
         "brave_*": true,
-        "chrome-devtools_*": true,
         "context7_*": true,
         "serena_*": false,
         "edit": false,
-        "bash": false
+        "bash": true
       },
       "permission": {
         "edit": "deny",
-        "bash": "deny"
+        "bash": {
+          "*": "deny",
+          "agent-browser *": "allow"
+        }
       }
     }
   }
 }
+```
+
+`agent-browser` はCLIなので、事前に次を実行します。
+
+```bash
+npm install -g agent-browser
+agent-browser install
 ```
 
 ## 3) `AGENTS.md` テンプレート（Minimal + Kaggle + Game最小）
@@ -145,7 +145,7 @@
 - Workflow order:
   1. Find candidates via `brave` (`site:kaggle.com ...`).
   2. Extract details via `webfetch` first.
-  3. If content is JS-rendered or incomplete, use `chrome-devtools`.
+  3. If content is JS-rendered or incomplete, use `agent-browser`.
 - Always produce a compact output:
   - top links
   - key ideas
@@ -183,7 +183,7 @@ Kaggleの過去solution/discussionを効率よく集め、すぐ実験に使え�
 ## Procedure
 1. `brave` で `site:kaggle.com` 検索し、候補URLを集める。
 2. 候補を `webfetch` で本文取得し、重要ポイントを抽出。
-3. 取得不足なら `chrome-devtools` で再取得する。
+3. 取得不足なら `agent-browser`（`bash`）で再取得する。
 4. 最後に以下の形式で圧縮して返す。
 
 ## Output Format
@@ -210,7 +210,7 @@ Kaggle discussion/codeページで本文が取り切れない場合に、取得�
 
 ## Fallback Policy
 1. まず `webfetch`。
-2. タイトルのみ/本文欠落なら `chrome-devtools`。
+2. タイトルのみ/本文欠落なら `agent-browser`。
 3. それでも難しい場合はURLと取得不能理由を明示して返す。
 
 ## Quality Gate
@@ -256,12 +256,13 @@ tools:
   webfetch: true
   websearch: true
   brave_*: true
-  chrome-devtools_*: true
   edit: false
-  bash: false
+  bash: true
 permission:
   edit: deny
-  bash: deny
+  bash:
+    "*": deny
+    "agent-browser *": allow
   skill:
     "kaggle-*": allow
     "*": ask
@@ -280,10 +281,10 @@ Keep final output compact and evidence-linked.
 
 - `minimal`:
   - 通常は `build` で作業
-  - `brave_*`/`chrome-devtools_*` はグローバルOFFのまま
+  - `brave_*` はグローバルOFFのまま
 - `kaggle`:
   - `@kaggle-research` を明示的に使う
-  - 必要時のみ `chrome-devtools` を `enabled: true` に変更
+  - 本文不足時のみ `agent-browser` を実行
 - `game`:
   - まず `game-dev-min` skillのみ適用
   - 詳細ルールは後で増やす
@@ -314,5 +315,5 @@ CV戦略、特徴量、リーク注意点を比較して。
 ## 9) 補足
 
 - `brave-search-mcp` はBraveブラウザ専用ではなく、検索APIサーバーです。
-- `chrome-devtools-mcp` はWeb探索より、動的ページ取得・デバッグ向きです。
-- Kaggle discussion参照は「検索MCP + ブラウザMCP」の併用が最も安定します。
+- `agent-browser` はWeb全体検索ではなく、ページ操作/抽出向きです。
+- Kaggle discussion参照は「検索MCP + webfetch + agent-browser」の併用が安定します。

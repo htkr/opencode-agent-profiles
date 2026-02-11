@@ -6,6 +6,8 @@
 
 - サブエージェント（軽量）: `github-copilot/gpt-5-mini`
 - サブエージェント（中負荷）: `openai/gpt-5.1-codex-mini`
+- 実験管理（指令/実装）: `openai/gpt-5.3-codex`
+- 実験管理（報告/台帳）: `github-copilot/gpt-5-mini`
 - メイン既定: `openai/gpt-5.3-codex`
 
 メインは実行中に `/models` やモデル切替キーで変更できます。サブエージェントは固定モデルを維持します。
