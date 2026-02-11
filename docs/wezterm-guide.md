@@ -123,6 +123,11 @@ Copy ModeはVimの移動体系を取り込み、キーボードだけでコピ�
 ### 9. WSL2起動
 既定ドメインは`WSL:Ubuntu`です。起動時のディレクトリは`~`に固定しています。
 
+### 9.1 設定ファイルの注意（重要）
+- Windows版WezTermの実設定ファイルは`C:\Users\htk\.wezterm.lua`です。
+- WSL側の`~/.config/wezterm/wezterm.lua`を編集しても反映されません。
+- 設定変更時は`/mnt/c/Users/htk/.wezterm.lua`（Windows側）を編集してください。
+
 ### 10. キーバインド（全体像）
 **コマンドパレット**
 - `Alt+Shift+P`
@@ -138,7 +143,7 @@ Copy ModeはVimの移動体系を取り込み、キーボードだけでコピ�
 1. `Ctrl+Shift+R`で再読み込み
 2. 構文エラー確認
    ```bash
-   lua ~/.config/wezterm/wezterm.lua
+   lua /mnt/c/Users/htk/.wezterm.lua
    ```
 
 ### WSL2が起動しない
