@@ -59,6 +59,24 @@
       "profiles": [
         "vanilla"
       ]
+    },
+    "kaggle-research": {
+      "description": "Kaggle research and experiment planning",
+      "mode": "subagent",
+      "tier": "tier2",
+      "profiles": [
+        "vanilla",
+        "ohmy"
+      ]
+    },
+    "game-dev-assistant": {
+      "description": "Game development workflow assistant",
+      "mode": "subagent",
+      "tier": "tier2",
+      "profiles": [
+        "vanilla",
+        "ohmy"
+      ]
     }
   },
   "ohmy_agents": {

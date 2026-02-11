@@ -1,0 +1,187 @@
+{
+  "catalog_version": 1,
+  "source": {
+    "provider": "anthropic",
+    "index_url": "https://code.claude.com/docs/llms.txt",
+    "skills_doc_url": "https://code.claude.com/docs/en/skills.md",
+    "selection_policy": "Curated for Kaggle and game development workflows"
+  },
+  "updated_at": "2026-02-11T14:04:45.222Z",
+  "skills": [
+    {
+      "name": "core-code-review",
+      "domain": "common",
+      "path": ".opencode/skills/core-code-review/SKILL.md",
+      "source_ref": "skills.md#configure-skills",
+      "sha256": "20ef9df5c0974e945044156daa5fa6b506190657f4dd30138845c6941cb51cf1"
+    },
+    {
+      "name": "core-debug-investigation",
+      "domain": "common",
+      "path": ".opencode/skills/core-debug-investigation/SKILL.md",
+      "source_ref": "skills.md#types-of-skill-content",
+      "sha256": "def3a25130ce9d3e66bf677da49b62842e35121350c4405b68ff57a1777b3514"
+    },
+    {
+      "name": "core-test-authoring",
+      "domain": "common",
+      "path": ".opencode/skills/core-test-authoring/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "8b714e4195d0ee17b5beeece57e52001f6d6a7891e0b0554350fa51049ba9e9f"
+    },
+    {
+      "name": "core-pr-summary",
+      "domain": "common",
+      "path": ".opencode/skills/core-pr-summary/SKILL.md",
+      "source_ref": "skills.md#inject-dynamic-context",
+      "sha256": "9bbc6a7a656278163546d25bb5a213230d76a287e0794b8097980b7511edb692"
+    },
+    {
+      "name": "core-safe-commit",
+      "domain": "common",
+      "path": ".opencode/skills/core-safe-commit/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "5e91a339510d4949e5a50696267f87c6586c28d773f3cf00c4213deef2a1c677"
+    },
+    {
+      "name": "kaggle-research",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-research/SKILL.md",
+      "source_ref": "skills.md#add-supporting-files",
+      "sha256": "31612493997efd8642d23b653b2417ecbaa3038513de7b15545cf19b7cd6ae61"
+    },
+    {
+      "name": "kaggle-discussion-harvest",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-discussion-harvest/SKILL.md",
+      "source_ref": "skills.md#control-who-invokes-a-skill",
+      "sha256": "3f0ba645b578e128f6cbeec9861b3e49821efa167f3d52db41b4cf791e4f1654"
+    },
+    {
+      "name": "kaggle-feature-ideation",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-feature-ideation/SKILL.md",
+      "source_ref": "skills.md#types-of-skill-content",
+      "sha256": "0de9c1aed4fbc2e81637641ddeffc1e356547ff78a44f13042d2a4285d8e8511"
+    },
+    {
+      "name": "kaggle-cv-strategy-audit",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-cv-strategy-audit/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "cbe174f952961d08abb0005f2e90ebd6cec619ac950e0469b305fe60a8c30fb7"
+    },
+    {
+      "name": "kaggle-error-analysis",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-error-analysis/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "389d4d97c2fab33e2bbc504ef85755a6c4788d84622c4594e264cd7fe3b0cb6e"
+    },
+    {
+      "name": "kaggle-ensemble-planner",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-ensemble-planner/SKILL.md",
+      "source_ref": "skills.md#configure-skills",
+      "sha256": "ccb9bf78c36c96b7475ab95a9a5cc895e144a2fb8183d6f06a9ac6f935ca3dc0"
+    },
+    {
+      "name": "kaggle-metric-alignment",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-metric-alignment/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "e073d10e36da362d2f0e39234e0fcd7b807ff1777cadaaaeb4b81c7218c917b5"
+    },
+    {
+      "name": "kaggle-submission-checklist",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-submission-checklist/SKILL.md",
+      "source_ref": "skills.md#disable-model-invocation-true",
+      "sha256": "daf1611569d74c631545060a8e5d457f8b1cb140b60c65be361be8ef0cd95337"
+    },
+    {
+      "name": "kaggle-fast-iteration",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-fast-iteration/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "a7ab99c5c8db2b838737c693b102b3105b04cee0a969d1da8d12a1fb3ebb0ff7"
+    },
+    {
+      "name": "kaggle-data-leakage-guard",
+      "domain": "kaggle",
+      "path": ".opencode/skills/kaggle-data-leakage-guard/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "b68d44ba306f6bd200091c095a53db57a3bb794ab824ac7e047d6d657d355c0c"
+    },
+    {
+      "name": "game-dev-min",
+      "domain": "game",
+      "path": ".opencode/skills/game-dev-min/SKILL.md",
+      "source_ref": "skills.md#configure-skills",
+      "sha256": "e557d71738306149ece23696fb1b85ff7befd3c597a1797bcf44ad08c9a29210"
+    },
+    {
+      "name": "game-perf-budget-check",
+      "domain": "game",
+      "path": ".opencode/skills/game-perf-budget-check/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "7ecf8533857153260b2dfdc6e2ade76777f7b0e434569815a607b32c1d274db4"
+    },
+    {
+      "name": "game-frame-time-profiler-plan",
+      "domain": "game",
+      "path": ".opencode/skills/game-frame-time-profiler-plan/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "ff69f8f95d540fb8d2df2d3ecc92b983f00c67db32f46bd71482f0190c7c6d5e"
+    },
+    {
+      "name": "game-scene-impact-check",
+      "domain": "game",
+      "path": ".opencode/skills/game-scene-impact-check/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "477963b93ba85c1f9115a5c3528c0d27e414f1bb931523ea889026ef08473b77"
+    },
+    {
+      "name": "game-asset-change-check",
+      "domain": "game",
+      "path": ".opencode/skills/game-asset-change-check/SKILL.md",
+      "source_ref": "skills.md#disable-model-invocation-true",
+      "sha256": "c1583048005c07ba1c02657f878a7a8b0853ccc0d1eb7dee89bf61bc8ff08062"
+    },
+    {
+      "name": "game-rendering-debug",
+      "domain": "game",
+      "path": ".opencode/skills/game-rendering-debug/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "a873d4f50af7f488acf977c1bb73b47b5397f98fbd51dc67713c60a83691fb34"
+    },
+    {
+      "name": "game-input-latency-check",
+      "domain": "game",
+      "path": ".opencode/skills/game-input-latency-check/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "d5821bf9323d3934685caa0b474155b842f6b0a752c1368600ed8ab7f933b148"
+    },
+    {
+      "name": "game-build-size-guard",
+      "domain": "game",
+      "path": ".opencode/skills/game-build-size-guard/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "41a4e46b65b96dbdc18273d07744cc873d16d2e2545d047ecd6f010d2d21b1f2"
+    },
+    {
+      "name": "game-mobile-compat-check",
+      "domain": "game",
+      "path": ".opencode/skills/game-mobile-compat-check/SKILL.md",
+      "source_ref": "common-workflows.md",
+      "sha256": "5251bebba34181b0c5a0e21ffdba160156adb1271abfb55dc45086ac427a28be"
+    },
+    {
+      "name": "game-save-data-migration-check",
+      "domain": "game",
+      "path": ".opencode/skills/game-save-data-migration-check/SKILL.md",
+      "source_ref": "skills.md#disable-model-invocation-true",
+      "sha256": "0eceeb745b9a052f3dc25b7a5c8a0dcffc3170f3a650e21a5dcd7ddd514b03c5"
+    }
+  ]
+}
