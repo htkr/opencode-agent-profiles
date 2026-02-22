@@ -37,11 +37,13 @@
     "bash": {
       "*": "ask",
       "agent-browser *": "allow"
-    }
+    },
+    "question": "allow",
+    "todowrite": "allow",
+    "todoread": "allow"
   },
   "plugin": [
-    "opencode-antigravity-auth@latest",
-    "./.opencode/plugins/ask-user-question.js"
+    "opencode-antigravity-auth@latest"
   ],
   "agent": {
     "build": {
