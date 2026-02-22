@@ -15,8 +15,23 @@ function main() {
   const rootContent = fs.readFileSync(rootAgents, "utf8");
   const minimalContent = fs.readFileSync(minimalAgents, "utf8");
 
+  const requiredPhrases = [
+    "フォールバック禁止（最重要）",
+    "代替確認手順は、実装の代替や迂回ではなく、検証不能理由の説明・再現手順・手動確認手順の提示に限定する。",
+    "後方互換性をデフォルトで考慮しない。",
+    "## Confirmation Gate",
+    "## Design Principles",
+    "常にシンプルな実装を優先し、DRY, KISS, YAGNIの原則を守る。",
+  ];
+
   if (rootContent !== minimalContent) {
     errors.push("AGENTS mismatch: AGENTS.md and .opencode/profiles/minimal/AGENTS.md differ");
+  }
+
+  for (const phrase of requiredPhrases) {
+    if (!rootContent.includes(phrase)) {
+      errors.push(`AGENTS.md missing required phrase: ${phrase}`);
+    }
   }
 
   if (!fs.existsSync(claudeMd)) {

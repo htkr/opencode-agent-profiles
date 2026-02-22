@@ -31,16 +31,16 @@
   - `kaggle-*` と `core-*` を許可
   - `brave_*` を許可、`agent-browser` 実行を許可
   - `game-*` を拒否
-  - 意思決定時は `ask_user_question` を原則利用
+  - 意思決定時は標準 `question` ツールを原則利用
 - `.opencode/agents/game-dev-assistant.md`
   - `game-*` と `core-*` を許可
   - `kaggle-*` を拒否
-  - 意思決定時は `ask_user_question` を原則利用
+  - 意思決定時は標準 `question` ツールを原則利用
 
 ## AskUserQuestion plugin
 
-- 実体: `.opencode/plugins/ask-user-question.js`
-- 提供tool: `ask_user_question`
+- 実体: OpenCode built-in
+- 提供tool: `question`
   - 引数: `question`, `options`, `recommended`, `context`
   - `options` は2〜6件
   - `recommended` は `options` 内の文字列と完全一致が必要

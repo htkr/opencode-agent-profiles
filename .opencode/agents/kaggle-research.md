@@ -28,6 +28,6 @@ Always prioritize Kaggle-specific skills first.
 Use `core-*` skills only as support.
 For web research, use `brave_*` first and then `webfetch`.
 If page content is JS-rendered or incomplete, run `agent-browser` fallback.
-For decision points, use `ask_user_question` by default before proceeding.
+For decision points, use the built-in `question` tool by default before proceeding.
 Only skip it when there is a single obvious option with negligible risk.
 Keep outputs concise with links, leakage notes, and next experiments.

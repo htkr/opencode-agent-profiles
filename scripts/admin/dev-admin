@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly SCRIPT_NAME="dev-admin"
+readonly LOG_TAG="dev-admin"
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "${SCRIPT_NAME}: must run as root" >&2
+  exit 1
+fi
+
+log() {
+  local msg="$1"
+  logger -t "${LOG_TAG}" -- "${msg}" || true
+}
+
+usage() {
+  cat <<'EOF'
+Usage: dev-admin <command> [args]
+
+Commands:
+  bootstrap-nix-dir [user]
+      Create /nix with safe permissions and ownership.
+      user defaults to htk.
+
+  install-nix
+      Install Nix using the Determinate installer.
+
+  repair-nix
+      Repair an existing Nix installation.
+
+  uninstall-nix
+      Uninstall Nix installed by nix-installer.
+
+  reinstall-nix
+      Uninstall then install Nix cleanly.
+
+  install-devbox [version]
+      Install Devbox binary to /usr/local/bin/devbox.
+      version defaults to latest.
+
+  apt-install <pkg...>
+      Install approved apt packages only.
+
+  systemd daemon-reload
+  systemd start nix-daemon
+  systemd enable-now nix-daemon
+      Restricted systemctl operations.
+EOF
+}
+
+cmd_bootstrap_nix_dir() {
+  local target_user="${1:-htk}"
+
+  if ! id "${target_user}" >/dev/null 2>&1; then
+    echo "${SCRIPT_NAME}: user not found: ${target_user}" >&2
+    exit 1
+  fi
+
+  install -d -m 0755 /nix
+  chown "${target_user}:root" /nix
+  chmod 0755 /nix
+  log "bootstrap-nix-dir user=${target_user}"
+}
+
+cmd_install_devbox() {
+  local version="${1:-latest}"
+  local url="https://releases.jetify.com/devbox"
+  local tmp
+
+  if [[ "${version}" != "latest" ]]; then
+    url="https://releases.jetify.com/devbox/${version}"
+  fi
+
+  tmp="$(mktemp)"
+  trap "rm -f '${tmp}'" EXIT
+
+  curl --fail --silent --show-error --location --output "${tmp}" "${url}"
+  install -m 0755 "${tmp}" /usr/local/bin/devbox
+  log "install-devbox version=${version}"
+}
+
+cmd_install_nix() {
+  local tmp
+  tmp="$(mktemp)"
+  trap "rm -f '${tmp}'" EXIT
+
+  curl --fail --silent --show-error --location --output "${tmp}" https://install.determinate.systems/nix
+  bash "${tmp}" install --determinate --no-confirm
+  log "install-nix determinate"
+}
+
+cmd_repair_nix() {
+  if [[ ! -x "/nix/nix-installer" ]]; then
+    echo "${SCRIPT_NAME}: /nix/nix-installer not found" >&2
+    exit 1
+  fi
+
+  /nix/nix-installer repair
+  log "repair-nix"
+}
+
+cmd_uninstall_nix() {
+  if [[ ! -x "/nix/nix-installer" ]]; then
+    echo "${SCRIPT_NAME}: /nix/nix-installer not found" >&2
+    exit 1
+  fi
+
+  /nix/nix-installer uninstall --no-confirm
+  log "uninstall-nix"
+}
+
+cmd_reinstall_nix() {
+  cmd_uninstall_nix
+  cmd_install_nix
+  log "reinstall-nix"
+}
+
+is_allowed_pkg() {
+  local pkg="$1"
+  case "${pkg}" in
+    ca-certificates|curl|git|jq|make|gcc|g++|build-essential|pkg-config|unzip|zip)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+cmd_apt_install() {
+  if [[ "$#" -eq 0 ]]; then
+    echo "${SCRIPT_NAME}: apt-install requires at least one package" >&2
+    exit 1
+  fi
+
+  local pkg
+  for pkg in "$@"; do
+    if ! is_allowed_pkg "${pkg}"; then
+      echo "${SCRIPT_NAME}: package not allowlisted: ${pkg}" >&2
+      exit 1
+    fi
+  done
+
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update
+  apt-get install -y --no-install-recommends "$@"
+  log "apt-install pkgs=$*"
+}
+
+cmd_systemd() {
+  local action="${1:-}"
+  local unit="${2:-}"
+
+  case "${action}:${unit}" in
+    daemon-reload:)
+      systemctl daemon-reload
+      log "systemd daemon-reload"
+      ;;
+    start:nix-daemon)
+      systemctl start nix-daemon.service
+      log "systemd start nix-daemon.service"
+      ;;
+    enable-now:nix-daemon)
+      systemctl enable --now nix-daemon.service
+      log "systemd enable --now nix-daemon.service"
+      ;;
+    *)
+      echo "${SCRIPT_NAME}: unsupported systemd action" >&2
+      exit 1
+      ;;
+  esac
+}
+
+main() {
+  local cmd="${1:-}"
+  shift || true
+
+  case "${cmd}" in
+    bootstrap-nix-dir)
+      cmd_bootstrap_nix_dir "$@"
+      ;;
+    install-devbox)
+      cmd_install_devbox "$@"
+      ;;
+    install-nix)
+      cmd_install_nix "$@"
+      ;;
+    repair-nix)
+      cmd_repair_nix "$@"
+      ;;
+    uninstall-nix)
+      cmd_uninstall_nix "$@"
+      ;;
+    reinstall-nix)
+      cmd_reinstall_nix "$@"
+      ;;
+    apt-install)
+      cmd_apt_install "$@"
+      ;;
+    systemd)
+      cmd_systemd "$@"
+      ;;
+    help|-h|--help|"")
+      usage
+      ;;
+    *)
+      echo "${SCRIPT_NAME}: unknown command: ${cmd}" >&2
+      usage
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
