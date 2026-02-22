@@ -14,6 +14,7 @@
 - Skill実体は `.opencode/skills/<skill-name>/SKILL.md`
 - 検証/ハッシュ更新は `scripts/skills/sync-anthropic-skills.mjs`
 - 用途別有効化は `.opencode/agents/*.md` の `permission.skill` で制御
+- 共有可否は `skills/manifest/shared-skills.allowlist.json` と `skills/manifest/nonshared-skills.json` で制御
 
 ## MCP/CLI前提（Kaggle調査）
 
@@ -30,11 +31,11 @@ agent-browser install
 ```bash
 agent-browser install --with-deps
 ```
-- 意思決定時の質問は `ask_user_question` tool を原則利用する
+- 意思決定時の質問は標準 `question` ツールを原則利用する
 
 ## AskUserQuestion運用
 
-- plugin実体: `.opencode/plugins/ask-user-question.js`
+- plugin実体: なし（OpenCode built-in）
 - 有効化は `profiles/generate-configs.mjs` で常時設定する
 - エージェント運用ルールは以下で管理する
   - `.opencode/agents/kaggle-research.md`
@@ -42,7 +43,7 @@ agent-browser install --with-deps
 
 ### ルール
 
-1. 意思決定が必要な場面では、原則 `ask_user_question` を使う。
+1. 意思決定が必要な場面では、原則 `question` を使う。
 2. 選択肢は2〜6件で提示する。
 3. 推奨案がある場合は `recommended` を必ず指定する。
 
@@ -64,6 +65,19 @@ agent-browser install --with-deps
 
 ```bash
 node scripts/skills/sync-anthropic-skills.mjs --write
+```
+
+7. 共有設定を更新する。
+
+- shared: `skills/manifest/shared-skills.allowlist.json` に skill 名を追加
+- nonshared: `skills/manifest/nonshared-skills.json` に理由付きで追加
+
+8. 共有リンクと検証を実行する。
+
+```bash
+node scripts/skills/sync-shared-skills.mjs
+node scripts/skills/check-shared-skills.mjs
+node scripts/skills/check-agent-rules.mjs
 ```
 
 6. プロファイル設定に影響がある変更なら再生成する。

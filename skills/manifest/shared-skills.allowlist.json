@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "shared_skills": [
+    "core-code-review",
+    "core-debug-investigation",
+    "core-pr-summary",
+    "core-safe-commit",
+    "core-test-authoring",
+    "exp-kaggle-runbook",
+    "exp-reporting",
+    "game-asset-change-check",
+    "game-build-size-guard",
+    "game-dev-min",
+    "game-frame-time-profiler-plan",
+    "game-input-latency-check",
+    "game-mobile-compat-check",
+    "game-perf-budget-check",
+    "game-rendering-debug",
+    "game-save-data-migration-check",
+    "game-scene-impact-check",
+    "kaggle-cv-strategy-audit",
+    "kaggle-data-leakage-guard",
+    "kaggle-ensemble-planner",
+    "kaggle-error-analysis",
+    "kaggle-fast-iteration",
+    "kaggle-feature-ideation",
+    "kaggle-metric-alignment",
+    "kaggle-submission-checklist",
+    "subagent-profile-manager",
+    "core-skill-creator",
+    "skills-governance"
+  ]
+}

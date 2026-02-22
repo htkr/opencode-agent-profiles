@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "nonshared_skills": [
+    {
+      "name": "kaggle-research",
+      "reason": "mcp-required",
+      "details": "Uses brave_* MCP tools"
+    },
+    {
+      "name": "kaggle-discussion-harvest",
+      "reason": "external-cli-required",
+      "details": "Uses agent-browser fallback"
+    }
+  ]
+}

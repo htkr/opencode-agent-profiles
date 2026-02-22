@@ -17,6 +17,13 @@
 3. `node scripts/skills/sync-anthropic-skills.mjs --write` を実行する。
 4. lockファイルのhash差分をレビューしてコミットする。
 
+## Shared policy (OpenCode + Claude Code + Codex)
+
+- Skill実体の正本は `.opencode/skills/`。
+- 共有対象は `skills/manifest/shared-skills.allowlist.json` で管理する。
+- 非共有対象は `skills/manifest/nonshared-skills.json` に理由付きで管理する。
+- 共有リンクは `node scripts/skills/sync-shared-skills.mjs` で再生成する。
+
 ## Invocation policy
 
 - `core-*`: 共通ルール

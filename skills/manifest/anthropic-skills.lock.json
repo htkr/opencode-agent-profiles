@@ -6,7 +6,7 @@
     "skills_doc_url": "https://code.claude.com/docs/en/skills.md",
     "selection_policy": "Curated for Kaggle and game development workflows"
   },
-  "updated_at": "2026-02-11T14:49:56.681Z",
+  "updated_at": "2026-02-22T14:19:06.149Z",
   "skills": [
     {
       "name": "core-code-review",
@@ -42,6 +42,41 @@
       "path": ".opencode/skills/core-safe-commit/SKILL.md",
       "source_ref": "common-workflows.md",
       "sha256": "5e91a339510d4949e5a50696267f87c6586c28d773f3cf00c4213deef2a1c677"
+    },
+    {
+      "name": "core-skill-creator",
+      "domain": "common",
+      "path": ".opencode/skills/core-skill-creator/SKILL.md",
+      "source_ref": "local-shared-skill-policy",
+      "sha256": "004897617977fb2f19a5e2942384fdc93466e5cfb21a8436a84c2b592edf1dbe"
+    },
+    {
+      "name": "skills-governance",
+      "domain": "common",
+      "path": ".opencode/skills/skills-governance/SKILL.md",
+      "source_ref": "local-shared-skill-policy",
+      "sha256": "9b9b0ef76ba14b673820a6b1145c7751d715df0fd8d2c85ded0f1cde804e56a9"
+    },
+    {
+      "name": "subagent-profile-manager",
+      "domain": "common",
+      "path": ".opencode/skills/subagent-profile-manager/SKILL.md",
+      "source_ref": "local-shared-skill-policy",
+      "sha256": "9ff45382abe2035083edf95a492ef3a968848d3c88b3e55beff3a48f9921d0af"
+    },
+    {
+      "name": "exp-kaggle-runbook",
+      "domain": "experiment",
+      "path": ".opencode/skills/exp-kaggle-runbook/SKILL.md",
+      "source_ref": "local-shared-skill-policy",
+      "sha256": "9e93152bc897bc627c8305ed8eb3c848bef9c03200157a23d2b8555372b879e7"
+    },
+    {
+      "name": "exp-reporting",
+      "domain": "experiment",
+      "path": ".opencode/skills/exp-reporting/SKILL.md",
+      "source_ref": "local-shared-skill-policy",
+      "sha256": "a8362720e35b6379d4f27cd07fda0bf6178e8bfbdb8f4a9ec431cf9edd2c7918"
     },
     {
       "name": "kaggle-research",
