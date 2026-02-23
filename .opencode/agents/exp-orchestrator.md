@@ -12,7 +12,7 @@ tools:
   edit: true
 permission:
   skill:
-    "colab-notebook-publisher": allow
+    "google-workspace-sync": allow
     "*": ask
   task:
     "*": deny

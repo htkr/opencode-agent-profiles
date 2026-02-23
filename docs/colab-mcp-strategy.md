@@ -10,27 +10,27 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 
 ## 推奨構成
 - 主経路: skills + CLI（`git`）でコンペrepo内の notebook を更新
-- 補助経路: Google Workspace MCP / Google Drive MCP で Drive 配置（手動アップロード廃止用）
-- 実行導線: `colab-notebook-publisher` skill 経由
+- 補助経路: Google Workspace MCP で Drive 配置（手動アップロード廃止用）
+- 実行導線: `google-workspace-sync` skill 経由（Colabはユースケースの1つ）
 
 ## なぜこの構成か
 - Colab に直接アップロードする UI 自動化は壊れやすい
 - GitHub 正本にすると履歴管理・レビュー・同期が簡単
 - GitHub 反映は CLI で十分なので MCP を増やさない
-- Google系MCPは Drive 手動アップロードをなくす目的に限定しつつ、将来のDocs/Sheets/Gmailにも流用できる
+- Google Workspace MCP は Drive 手動アップロードをなくす目的に加え、将来のDocs/Sheets/Gmailにも流用できる
 
 ## 典型フロー
 1. ローカルで `tmp/SSH.ipynb` を編集
 2. skill で notebook JSON を検証
 3. skills + CLI（`git`）でコンペrepoの notebook を更新
 4. Colab URL を生成して開く
-5. 必要時だけ Drive にもコピー（Google系MCP）
+5. 必要時だけ Drive にもコピー（Google Workspace MCP）
 
 ## skill / 参照ファイル
-- Skill: `.opencode/skills/colab-notebook-publisher/SKILL.md`
-- 調査比較: `.opencode/skills/colab-notebook-publisher/references/mcp-survey.md`
-- Codex設定テンプレ: `.opencode/skills/colab-notebook-publisher/references/codex-mcp-setup.md`
-- Colab URL仕様: `.opencode/skills/colab-notebook-publisher/references/colab-opening-patterns.md`
+- Skill: `.opencode/skills/google-workspace-sync/SKILL.md`
+- 調査比較: `.opencode/skills/google-workspace-sync/references/mcp-survey.md`
+- Codex設定テンプレ: `.opencode/skills/google-workspace-sync/references/codex-mcp-setup.md`
+- Colab URL仕様: `.opencode/skills/google-workspace-sync/references/colab-opening-patterns.md`
 
 ## セキュリティ注意
 - GitHub token / Google OAuth credential は repo に保存しない
@@ -40,4 +40,4 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 ## MCPを使う条件（この運用）
 - GitHub反映: 使わない（CLIで十分）
 - Colab URL生成: 使わない（ローカルscriptで十分）
-- Google Drive 配置: 使う（手動アップロード廃止のため）
+- Google Drive / Workspace 操作: Google Workspace MCP を使う（手動アップロード廃止のため）

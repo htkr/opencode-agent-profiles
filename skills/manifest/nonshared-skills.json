@@ -12,7 +12,7 @@
       "details": "Uses agent-browser fallback"
     },
     {
-      "name": "colab-notebook-publisher",
+      "name": "google-workspace-sync",
       "reason": "security-sensitive",
       "details": "Uses MCP tools with GitHub/Google credentials and write access"
     }

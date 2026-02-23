@@ -6,7 +6,7 @@
     "skills_doc_url": "https://code.claude.com/docs/en/skills.md",
     "selection_policy": "Curated for Kaggle and game development workflows"
   },
-  "updated_at": "2026-02-23T05:55:37.467Z",
+  "updated_at": "2026-02-23T07:25:09.900Z",
   "skills": [
     {
       "name": "core-code-review",
@@ -219,11 +219,11 @@
       "sha256": "0eceeb745b9a052f3dc25b7a5c8a0dcffc3170f3a650e21a5dcd7ddd514b03c5"
     },
     {
-      "name": "colab-notebook-publisher",
+      "name": "google-workspace-sync",
       "domain": "common",
-      "path": ".opencode/skills/colab-notebook-publisher/SKILL.md",
+      "path": ".opencode/skills/google-workspace-sync/SKILL.md",
       "source_ref": "local-custom",
-      "sha256": "02e3389c124c92e413d4d45cf2e42c21d86b75e44a2a4b66351165b5c0fe3f7d"
+      "sha256": "bbf3de422ac21192f5bc27fc9b3a98e91852b527ddb56ace987878a9598b818f"
     }
   ]
 }

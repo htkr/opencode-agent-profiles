@@ -2,7 +2,7 @@
 
 ## 結論（推奨構成）
 - 主経路: skills + CLI（`git`）で notebook をコンペrepoへ更新（MCP不要）
-- 補助経路: Google Workspace MCP（汎用）または Google Drive MCP（軽量）で Drive 配置
+- 補助経路: Google Workspace MCP（採用）で Drive/Workspace 配置
 - 非推奨（主経路）: Colab UI を browser automation で直接操作
 
 ## 比較表
@@ -11,8 +11,8 @@
 |---|---|---:|---:|---:|---:|---|
 | GitHub CLI（`git`） | repo 反映、履歴管理 | 高 | - | 中 | 中 | 採用（主） |
 | GitHub MCP（公式） | repo 読み書き、PR、issue等 | 高（GitHub repo配置に最適） | 高（`git`で十分） | 中 | 中（PAT/GitHub App） | 保留（通常不要） |
-| Google Workspace MCP | Drive/Docs/Sheets/Gmail等 | 中〜高（Drive配置可能なら可） | 低〜中 | 高 | 高（OAuth） | 採用候補（補助/汎用） |
-| Google Drive MCP（特化） | Drive/Docs/Sheets/Slides | 高（Drive配置に直結） | 低〜中 | 中 | 中〜高（OAuth/SA実装次第） | 採用候補（補助/軽量） |
+| Google Workspace MCP | Drive/Docs/Sheets/Gmail等 | 中〜高（Drive配置可能なら可） | 低〜中 | 高 | 高（OAuth） | 採用（補助/汎用） |
+| Google Drive MCP（特化） | Drive/Docs/Sheets/Slides | 高（Drive配置に直結） | 低〜中 | 中 | 中〜高（OAuth/SA実装次第） | 非採用（参考） |
 | OpenAPI→MCP 変換系 | OpenAPI API 全般 | 低〜中（Google OAuth2制約に依存） | 中 | 高 | 高 | 保留 |
 | Browser Automation MCP | ブラウザ操作全般 | 低（UI変化に弱い） | 中 | 中 | 高 | 非推奨（主経路） |
 
@@ -28,6 +28,7 @@
 - Drive 配置が必要な場面（共同作業、MyDrive運用、ColabのDrive起点運用）をカバーできる。
 - Workspace MCP は将来の Gmail / Sheets / Docs 自動化にも横展開しやすい。
 - ただし OAuth 設定コストは高いので、日常運用の主経路にはしない。
+- 今回は再利用性を優先し、Google Workspace MCP を採用する。
 
 ## 候補メモ
 
@@ -62,7 +63,7 @@
 
 ## 導入の優先順位（MCP最小化）
 1. GitHub経路を skills + CLI で運用化（MCPなし）
-2. Drive 手動アップロードをなくす必要があるため、Google Workspace MCP か Google Drive MCP を1つだけ追加
+2. Drive 手動アップロードをなくすため、Google Workspace MCP を追加
 3. Google系MCP を read/list で接続確認
 4. Drive 書込を有効化して notebook 配置を実運用化
 5. Google 汎用API 自動化が必要になった段階で OpenAPI/Discovery ベースを再評価

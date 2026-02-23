@@ -24,7 +24,7 @@ check_path_var() {
 }
 
 echo "[Purpose]"
-echo "This script is a Google MCP preflight for Drive publish."
+echo "This script is a Google Workspace MCP preflight (Drive/Workspace operations)."
 echo "GitHub publish is CLI-first and does not require MCP."
 
 echo
@@ -36,7 +36,7 @@ echo "(optional for this script; may still be needed for git push/gh auth depend
 
 echo
 
-echo "[Google MCP prerequisites - common variants]"
+echo "[Google Workspace MCP prerequisites - common variants]"
 check_path_var GOOGLE_APPLICATION_CREDENTIALS
 check_path_var GOOGLE_WORKSPACE_CREDENTIALS
 check_path_var GOOGLE_OAUTH_CREDENTIALS
@@ -46,5 +46,5 @@ cat <<'MSG'
 Notes:
 - Variable names differ by MCP implementation. Keep this script as a quick preflight only.
 - Do not store secrets in this repository.
-- Run this only when using the Google Drive MCP path.
+- Run this before Google Workspace MCP operations (Drive/Docs/Sheets/etc.).
 MSG
