@@ -10,6 +10,9 @@ tools:
   write: true
   edit: true
 permission:
+  skill:
+    "colab-notebook-publisher": allow
+    "*": ask
   bash:
     "*": ask
     "bash scripts/exp/*": allow

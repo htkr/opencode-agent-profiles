@@ -11,6 +11,9 @@ tools:
   write: true
   edit: true
 permission:
+  skill:
+    "colab-notebook-publisher": allow
+    "*": ask
   task:
     "*": deny
     "exp-*": allow

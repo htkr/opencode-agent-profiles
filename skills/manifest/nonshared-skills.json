@@ -10,6 +10,11 @@
       "name": "kaggle-discussion-harvest",
       "reason": "external-cli-required",
       "details": "Uses agent-browser fallback"
+    },
+    {
+      "name": "colab-notebook-publisher",
+      "reason": "security-sensitive",
+      "details": "Uses MCP tools with GitHub/Google credentials and write access"
     }
   ]
 }
