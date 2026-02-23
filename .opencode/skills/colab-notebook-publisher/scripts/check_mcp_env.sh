@@ -23,8 +23,16 @@ check_path_var() {
   fi
 }
 
-echo "[GitHub MCP prerequisites]"
+echo "[Purpose]"
+echo "This script is a Google MCP preflight for Drive publish."
+echo "GitHub publish is CLI-first and does not require MCP."
+
+echo
+
+echo "[GitHub CLI note]"
 check_var GITHUB_TOKEN
+
+echo "(optional for this script; may still be needed for git push/gh auth depending on your setup)"
 
 echo
 
@@ -38,4 +46,5 @@ cat <<'MSG'
 Notes:
 - Variable names differ by MCP implementation. Keep this script as a quick preflight only.
 - Do not store secrets in this repository.
+- Run this only when using the Google Drive MCP path.
 MSG
