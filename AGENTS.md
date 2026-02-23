@@ -2,7 +2,8 @@
 
 ## Communication Policy
 - MUST: ユーザへの応答は常に日本語。
-- MUST: 意思決定が必要な場面では、`question` ツールを使ってユーザに確認する。
+- MUST: 意思決定が必要な場面では各選択肢に3行程度の説明を付与し、前提・メリット・デメリットの観点を明記する。
+- SHOLD: `question` ツールを使ってユーザに確認する。
 
 ## Workflow Orchestration
 - MUST: 非自明タスク（3ステップ以上、または設計判断を伴う作業）は plan mode で開始する。
@@ -33,7 +34,6 @@
 - SHOULD: 常にシンプルな実装を優先し、DRY, KISS, YAGNIの原則を守る。
 
 ## Safety and Git Hygiene
-- MUST: 変更コストが大きい事案では、複数の選択肢を提示して指示を求める。各選択肢に3行程度の説明を付与し、前提・メリット・デメリットの観点を明記する。
 - MUST: ファイル編集後は commit する。
 - MUST: 1機能または1実験ごとに push する。
 - MUST NOT: 秘密情報（鍵、token、認証情報、.env）は commit/push しない。
