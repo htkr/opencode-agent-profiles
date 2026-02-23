@@ -10,22 +10,22 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 
 ## 推奨構成
 - 主経路: skills + CLI（`git`）でコンペrepo内の notebook を更新
-- 補助経路: Google Workspace MCP で Drive 配置（手動アップロード廃止用）
+- 補助経路: Google Drive系特化MCP で Drive 配置（手動アップロード廃止用）
 - 実行導線: `google-workspace-sync` skill 経由（Colabはユースケースの1つ）
-- Google Workspace MCP の起動方式: `uvx`（標準）
+- 既定MCP: `piotr-agier/google-drive-mcp`
 
 ## なぜこの構成か
 - Colab に直接アップロードする UI 自動化は壊れやすい
 - GitHub 正本にすると履歴管理・レビュー・同期が簡単
 - GitHub 反映は CLI で十分なので MCP を増やさない
-- Google Workspace MCP は Drive 手動アップロードをなくす目的に加え、将来のDocs/Sheets/Gmailにも流用できる
+- Google Drive系特化MCP は Drive/Docs/Sheets に絞り、Google Workspace MCP よりスコープと運用負荷を抑えやすい
 
 ## 典型フロー
 1. ローカルで `tmp/SSH.ipynb` を編集
 2. skill で notebook JSON を検証
 3. skills + CLI（`git`）でコンペrepoの notebook を更新
 4. Colab URL を生成して開く
-5. 必要時だけ Drive にもコピー（Google Workspace MCP）
+5. 必要時だけ Drive にもコピー（Google Drive系MCP）
 
 ## skill / 参照ファイル
 - Skill: `.opencode/skills/google-workspace-sync/SKILL.md`
@@ -42,11 +42,16 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 ## MCPを使う条件（この運用）
 - GitHub反映: 使わない（CLIで十分）
 - Colab URL生成: 使わない（ローカルscriptで十分）
-- Google Drive / Workspace 操作: Google Workspace MCP を使う（手動アップロード廃止のため）
+- Google Drive / Docs / Sheets 操作: Google Drive系MCP を使う（手動アップロード廃止のため）
 
-## Colab での Google Workspace MCP 運用（read/list 推奨開始）
+## Colab での Google Drive系MCP 運用（read/list 推奨開始）
 1. Colab Secrets から credential を取得する
 2. `/tmp` に credential ファイルを書き出し `GOOGLE_APPLICATION_CREDENTIALS` を設定する
-3. Colab runtime 内で `uvx workspace-mcp --transport streamable-http` を起動する
-4. 同一runtime内のクライアントから Drive read/list を実行して接続確認する
+3. Colab runtime 内で採用MCPを起動する（HTTP transport がある実装なら HTTP、なければ stdio/CLI）
+4. 同一runtime内のクライアント/テストコードから Drive read/list を実行して接続確認する
 5. write は read/list 確認後に別ステップで有効化する
+
+## 既知の制約（Google OAuth）
+- Google OAuth 同意画面が `Testing` の場合、実行アカウントを test user に追加しないとアクセスがブロックされる
+- これは特定MCP実装の不具合ではなく、Google OAuth の運用制約
+- Drive系特化MCPに切り替えても、自前OAuthアプリを使う場合は同様の管理が必要

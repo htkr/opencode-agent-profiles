@@ -24,7 +24,7 @@ check_path_var() {
 }
 
 echo "[Purpose]"
-echo "This script is a Google Workspace MCP preflight (Drive/Workspace operations)."
+echo "This script is a Google Drive/Workspace MCP preflight (Drive/Docs/Sheets operations)."
 echo "GitHub publish is CLI-first and does not require MCP."
 
 echo
@@ -36,11 +36,19 @@ echo "(optional for this script; may still be needed for git push/gh auth depend
 
 echo
 
-echo "[Google Workspace MCP prerequisites - common variants]"
+echo "[Google MCP prerequisites - common variants]"
 check_path_var GOOGLE_APPLICATION_CREDENTIALS
 check_path_var GOOGLE_WORKSPACE_CREDENTIALS
 check_path_var GOOGLE_OAUTH_CREDENTIALS
-check_var GOOGLE_CLIENT_SECRET_PATH
+check_path_var GOOGLE_CLIENT_SECRET_PATH
+
+echo
+
+echo "[Drive-focused MCP extras (implementation-specific)]"
+check_path_var GOOGLE_DRIVE_MCP_CREDENTIALS_DIR
+check_path_var GOOGLE_DRIVE_TOKEN_PATH
+check_var GOOGLE_OAUTH_CLIENT_ID
+check_var GOOGLE_OAUTH_CLIENT_SECRET
 
 if [ -n "${COLAB_RELEASE_TAG:-}" ] || [ -n "${COLAB_GPU:-}" ]; then
   echo
@@ -59,5 +67,6 @@ Notes:
 - This repo standardizes on GOOGLE_APPLICATION_CREDENTIALS when possible.
 - Some MCP builds may instead require GOOGLE_CLIENT_SECRET_PATH or client-id/client-secret env vars.
 - Do not store secrets in this repository.
-- Run this before Google Workspace MCP operations (Drive/Docs/Sheets/etc.).
+- If OAuth consent screen is in Testing mode, add your Google account as a test user first.
+- Run this before Google MCP operations (Drive/Docs/Sheets/etc.).
 MSG
