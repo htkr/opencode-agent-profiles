@@ -15,6 +15,11 @@
       "name": "google-workspace-sync",
       "reason": "security-sensitive",
       "details": "Uses MCP tools with GitHub/Google credentials and write access"
+    },
+    {
+      "name": "colab-ssh-attach",
+      "reason": "external-cli-required",
+      "details": "Uses local cloudflared/ssh/wezterm CLI to attach Colab SSH sessions"
     }
   ]
 }

@@ -32,6 +32,12 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - 調査比較: `.opencode/skills/google-workspace-sync/references/mcp-survey.md`
 - Codex設定テンプレ: `.opencode/skills/google-workspace-sync/references/codex-mcp-setup.md`
 - Colab URL仕様: `.opencode/skills/google-workspace-sync/references/colab-opening-patterns.md`
+- Colab SSH接続運用: `.opencode/skills/colab-ssh-attach/SKILL.md`
+
+## Colab SSH 接続の自動化（skill + ローカルCLI）
+- Colab 側で `WORK_DIR/.colab_local/runtime/ssh_connection.json` を正本として保存する
+- ローカルでは `scripts/colab_open_ssh_wezterm.sh` を使い、wezterm優先で接続する（未導入時はコマンド表示/直接実行）
+- この導線は MCP ではなく skill + ローカルCLI を主とする
 
 ## セキュリティ注意
 - GitHub token / Google OAuth credential は repo に保存しない
