@@ -12,6 +12,7 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - 主経路: skills + CLI（`git`）でコンペrepo内の notebook を更新
 - 補助経路: Google Workspace MCP で Drive 配置（手動アップロード廃止用）
 - 実行導線: `google-workspace-sync` skill 経由（Colabはユースケースの1つ）
+- Google Workspace MCP の起動方式: `uvx`（標準）
 
 ## なぜこの構成か
 - Colab に直接アップロードする UI 自動化は壊れやすい
@@ -36,8 +37,16 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - GitHub token / Google OAuth credential は repo に保存しない
 - Google系MCPはまず read/list で接続確認し、必要な write だけ有効化する
 - notebook 書込前に対象 repo/path を明示確認する
+- Colab では secret は Notebook secrets から注入し、credential ファイルは `/tmp` のみに配置する（Drive保存しない）
 
 ## MCPを使う条件（この運用）
 - GitHub反映: 使わない（CLIで十分）
 - Colab URL生成: 使わない（ローカルscriptで十分）
 - Google Drive / Workspace 操作: Google Workspace MCP を使う（手動アップロード廃止のため）
+
+## Colab での Google Workspace MCP 運用（read/list 推奨開始）
+1. Colab Secrets から credential を取得する
+2. `/tmp` に credential ファイルを書き出し `GOOGLE_APPLICATION_CREDENTIALS` を設定する
+3. Colab runtime 内で `uvx workspace-mcp --transport streamable-http` を起動する
+4. 同一runtime内のクライアントから Drive read/list を実行して接続確認する
+5. write は read/list 確認後に別ステップで有効化する

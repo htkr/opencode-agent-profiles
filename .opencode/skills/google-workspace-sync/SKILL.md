@@ -19,6 +19,7 @@ Google Workspace（主にDrive）へのファイル連携を、MCP前提・安�
 
 ## Defaults
 - Google Workspace 側の操作は Google Workspace MCP を使う
+- Google Workspace MCP の起動は `uvx` を標準とする
 - GitHub 反映は別経路（CLI）で扱う
 - Colab UI 直接操作は行わない
 
@@ -26,10 +27,11 @@ Google Workspace（主にDrive）へのファイル連携を、MCP前提・安�
 1. `references/mcp-survey.md` で「CLIで代替可能か」を確認し、MCP使用が本当に必要か判断する。
 2. `references/codex-mcp-setup.md` を参照し、Google Workspace MCP を設定する。
 3. Google Workspace 操作前に `scripts/check_mcp_env.sh` で credential path の有無を確認する。
-4. Drive へ notebook を置く場合は `scripts/validate_notebook_json.py` で notebook を検証する。
-5. Colab + GitHub 併用時のみ `scripts/publish_notebook_git.sh`（または通常の `git`）を使う。
-6. Colab URL が必要な場合のみ `scripts/render_colab_url.py` を使う。
-7. Google Workspace MCP で Drive/Workspace を更新する（未設定なら前提不足を返す）。
+4. Colab で使う場合は Colab Secrets + `/tmp` を使って credential を注入し、runtime 内で HTTP MCP を起動する。
+5. Drive へ notebook を置く場合は `scripts/validate_notebook_json.py` で notebook を検証する。
+6. Colab + GitHub 併用時のみ `scripts/publish_notebook_git.sh`（または通常の `git`）を使う。
+7. Colab URL が必要な場合のみ `scripts/render_colab_url.py` を使う。
+8. Google Workspace MCP で Drive/Workspace を更新する（未設定なら前提不足を返す）。
 
 ## Output
 - 実行した Google Workspace 操作の種類（Drive upload/update など）

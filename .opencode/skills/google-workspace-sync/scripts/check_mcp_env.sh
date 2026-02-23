@@ -40,11 +40,24 @@ echo "[Google Workspace MCP prerequisites - common variants]"
 check_path_var GOOGLE_APPLICATION_CREDENTIALS
 check_path_var GOOGLE_WORKSPACE_CREDENTIALS
 check_path_var GOOGLE_OAUTH_CREDENTIALS
+check_var GOOGLE_CLIENT_SECRET_PATH
+
+if [ -n "${COLAB_RELEASE_TAG:-}" ] || [ -n "${COLAB_GPU:-}" ]; then
+  echo
+  echo "[Colab detected]"
+  echo "Use Colab Secrets and write credentials to /tmp only (do not save to Drive/repo)."
+else
+  echo
+  echo "[Colab not detected]"
+  echo "If you plan to run MCP in Colab, re-run this script inside the Colab runtime too."
+fi
 
 cat <<'MSG'
 
 Notes:
 - Variable names differ by MCP implementation. Keep this script as a quick preflight only.
+- This repo standardizes on GOOGLE_APPLICATION_CREDENTIALS when possible.
+- Some MCP builds may instead require GOOGLE_CLIENT_SECRET_PATH or client-id/client-secret env vars.
 - Do not store secrets in this repository.
 - Run this before Google Workspace MCP operations (Drive/Docs/Sheets/etc.).
 MSG
