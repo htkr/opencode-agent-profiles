@@ -1,0 +1,12 @@
+{
+  "name": "opencode-agent-profiles-tools",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "devDependencies": {
+    "playwright": "^1.52.0",
+    "tsx": "^4.20.6"
+  },
+  "scripts": {
+    "colab:control": "tsx scripts/colab_control_playwright.ts"
+  }
+}

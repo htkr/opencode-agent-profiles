@@ -1,12 +1,12 @@
-# Colab Notebook Runner 実装計画（通常Colab + Playwright MCP）
+# Colab Notebook Runner 実装計画（通常Colab + Playwright CLI）
 
 ## 目的
 通常版 Google Colab を対象に、Colab SSH 環境の `起動 / 再開 / 終了` をエージェント作業で完結させる。
 
 前提:
 - Colab 本体は通常版（Colab Enterprise ではない）
-- Colab UI 自動化の主軸は `Playwright MCP`
-- 診断用に `Chrome DevTools MCP` を後から併用可能にする
+- Colab UI 自動化の主軸は `Playwright CLI`（ローカルスクリプト）
+- 診断用に `Playwright MCP` / `Chrome DevTools MCP` を後から併用可能にする
 - GitHub はローカル Git 正本、Colab は GitHub notebook を開く実行フロント
 
 ## スコープ
@@ -52,6 +52,14 @@
   - state JSON 管理
   - 既存スクリプト間のオーケストレーション
 
+## 開発環境（実装前提）
+- `devbox` を標準とし、`nodejs` / `pnpm` を提供する
+- Node依存は `pnpm` で管理し、Playwright CLI 実行は `pnpm exec` を使う
+- 初回セットアップ（CLI主軸）:
+  1. `devbox shell`
+  2. `pnpm install`
+  3. `pnpm exec playwright install chromium`
+
 ## アーキテクチャ
 
 ### 1. ローカル制御層（Orchestrator）
@@ -64,7 +72,7 @@
   - `scripts/colab_open_ssh_wezterm.sh` 呼び出し
   - `session_state.json` 管理
 
-### 2. UI 制御層（Playwright MCP 経由）
+### 2. UI 制御層（Playwright CLI）
 - 実装体: `scripts/colab_control_playwright.ts`
 - 役割:
   - Colab notebook URL を開く
@@ -254,11 +262,11 @@ scripts/colab_orchestrate.sh stop \
 4. runtime 停止完了を確認
 5. `session_state.json.phase = "stopped"` 更新
 
-## Playwright MCP / Chrome DevTools MCP の使い分け（実装反映）
+## Playwright CLI / MCP 補助の使い分け（実装反映）
 - 標準:
-  - `Playwright MCP` のみで UI 操作
+  - `Playwright CLI` で UI 操作を完結（JSON結果のみ返す）
 - 診断モード（将来オプション）:
-  - `Chrome DevTools MCP` を有効化してコンソール/ネットワーク確認
+  - `Playwright MCP` または `Chrome DevTools MCP` を有効化してコンソール/ネットワーク/手動調査を補助
 - フォールバック禁止:
   - Playwright 失敗時に自動で Chrome DevTools 操作へ切替しない
   - 診断情報を保存して停止する

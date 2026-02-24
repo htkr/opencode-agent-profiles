@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Phase 1 minimal stub for Colab UI control.
- * 実ブラウザ操作は次フェーズで Playwright MCP に置き換える。
+ * Colab UI control via Playwright CLI (local script).
+ * 実ブラウザ操作の主軸は CLI。MCP は補助診断に留める。
  * 現時点では:
  * - 入力検証
  * - 診断ディレクトリ作成
@@ -14,7 +14,7 @@ const path = require("path");
 
 function usage() {
   console.error(
-    "Usage: scripts/colab_control_playwright.ts <start|resume|stop> --input-json '<json>'"
+    "Usage: scripts/colab_control_playwright.ts <start|resume|stop> (--input-json '<json>' | --input-file path) [--output-file path] [--user-data-dir path] [--browser-channel chrome|chromium] [--timeout-ms ms] [--force-stub]"
   );
 }
 
@@ -48,10 +48,28 @@ function parseArgs(argv) {
     process.exit(1);
   }
   let inputJson = "";
+  let inputFile = "";
+  let outputFile = "";
+  let userDataDir = "";
+  let browserChannel = "chromium";
+  let timeoutMs = "";
+  let forceStub = false;
   for (let i = 3; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--input-json") {
       inputJson = argv[++i] || "";
+    } else if (a === "--input-file") {
+      inputFile = argv[++i] || "";
+    } else if (a === "--output-file") {
+      outputFile = argv[++i] || "";
+    } else if (a === "--user-data-dir") {
+      userDataDir = argv[++i] || "";
+    } else if (a === "--browser-channel") {
+      browserChannel = argv[++i] || "";
+    } else if (a === "--timeout-ms") {
+      timeoutMs = argv[++i] || "";
+    } else if (a === "--force-stub") {
+      forceStub = true;
     } else if (a === "-h" || a === "--help") {
       usage();
       process.exit(0);
@@ -61,11 +79,15 @@ function parseArgs(argv) {
       process.exit(1);
     }
   }
-  if (!inputJson) {
-    console.error("ERROR: --input-json is required");
+  if (!!inputJson === !!inputFile) {
+    console.error("ERROR: specify exactly one of --input-json or --input-file");
     process.exit(1);
   }
-  return { mode, inputJson };
+  if (!["chrome", "chromium"].includes(browserChannel)) {
+    console.error("ERROR: --browser-channel must be chrome or chromium");
+    process.exit(1);
+  }
+  return { mode, inputJson, inputFile, outputFile, userDataDir, browserChannel, timeoutMs, forceStub };
 }
 
 function validateInput(input, mode) {
@@ -81,6 +103,13 @@ function validateInput(input, mode) {
   if (!Array.isArray(input.cell_tags)) {
     throw new Error("cell_tags must be array");
   }
+}
+
+function loadInput(parsed) {
+  if (parsed.inputFile) {
+    return JSON.parse(fs.readFileSync(parsed.inputFile, "utf8"));
+  }
+  return JSON.parse(parsed.inputJson);
 }
 
 function createDiagnostics(diagRoot, mode, input) {
@@ -129,16 +158,34 @@ async function captureDiagnostics(page, diagnosticsDir, metaPatch = {}) {
   } catch (_) {}
 }
 
-async function openAndInspectColab(input, mode, diagnosticsDir) {
+async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
   const { chromium } = require("playwright");
   const headless = input.headed === false;
-  const browser = await chromium.launch({ headless });
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const launchMode = runtimeOpts.browserChannel === "chrome" ? "persistent" : "ephemeral";
+  let browser = null;
+  let context = null;
+  let page = null;
+  if (runtimeOpts.userDataDir) {
+    context = await chromium.launchPersistentContext(runtimeOpts.userDataDir, {
+      headless,
+      channel: runtimeOpts.browserChannel === "chrome" ? "chrome" : undefined,
+    });
+    page = context.pages()[0] || (await context.newPage());
+  } else {
+    browser = await chromium.launch({
+      headless,
+      channel: runtimeOpts.browserChannel === "chrome" ? "chrome" : undefined,
+    });
+    context = await browser.newContext();
+    page = await context.newPage();
+  }
 
   let step = "launch";
   try {
-    await page.goto(input.notebook_url, { waitUntil: "domcontentloaded", timeout: input.timeout_ms || 60000 });
+    await page.goto(input.notebook_url, {
+      waitUntil: "domcontentloaded",
+      timeout: runtimeOpts.timeoutMs || input.timeout_ms || 60000,
+    });
     step = "loaded";
     await page.waitForTimeout(1000);
 
@@ -163,6 +210,9 @@ async function openAndInspectColab(input, mode, diagnosticsDir) {
       connect_button_visible: connectVisible,
       cell_tag_hits: cellTagHits,
       mode,
+      browser_channel: runtimeOpts.browserChannel,
+      user_data_dir: runtimeOpts.userDataDir || null,
+      launch_mode: launchMode,
     });
 
     return {
@@ -171,6 +221,8 @@ async function openAndInspectColab(input, mode, diagnosticsDir) {
       cellTagHits,
       pageTitle: title,
       step,
+      browserChannel: runtimeOpts.browserChannel,
+      userDataDir: runtimeOpts.userDataDir || null,
     };
   } catch (e) {
     await captureDiagnostics(page, diagnosticsDir, {
@@ -181,7 +233,9 @@ async function openAndInspectColab(input, mode, diagnosticsDir) {
     throw e;
   } finally {
     await context.close().catch(() => {});
-    await browser.close().catch(() => {});
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
   }
 }
 
@@ -227,15 +281,20 @@ function buildStubResponse(mode, input, diagnosticsDir, runtimeMeta = null) {
 
 function main() {
   try {
-    const { mode, inputJson } = parseArgs(process.argv);
-    const input = JSON.parse(inputJson);
+    const parsed = parseArgs(process.argv);
+    const { mode } = parsed;
+    const input = loadInput(parsed);
     validateInput(input, mode);
     const diagnosticsDir = createDiagnostics(input.diag_dir, mode, input);
     (async () => {
       let runtimeMeta = null;
-      if (!process.env.COLAB_CONTROL_FORCE_STUB) {
+      if (!(parsed.forceStub || process.env.COLAB_CONTROL_FORCE_STUB)) {
         try {
-          runtimeMeta = await openAndInspectColab(input, mode, diagnosticsDir);
+          runtimeMeta = await openAndInspectColab(input, mode, diagnosticsDir, {
+            userDataDir: parsed.userDataDir,
+            browserChannel: parsed.browserChannel,
+            timeoutMs: parsed.timeoutMs ? Number(parsed.timeoutMs) : undefined,
+          });
         } catch (e) {
           // Playwright未導入/認証不足/UI変動などで失敗しても診断を残して返す。
           const msg = e && e.message ? e.message : String(e);
@@ -244,35 +303,36 @@ function main() {
             error: msg,
             mode,
           });
-          process.stdout.write(
-            JSON.stringify({
-              ok: false,
-              phase: "error",
-              markers: {},
-              diagnostics_dir: diagnosticsDir,
-              current_url: input.notebook_url,
-              error: msg,
-              stub: false,
-            })
-          );
+          const payload = {
+            ok: false,
+            phase: "error",
+            markers: {},
+            diagnostics_dir: diagnosticsDir,
+            current_url: input.notebook_url,
+            error: msg,
+            stub: false,
+          };
+          if (parsed.outputFile) writeJson(parsed.outputFile, payload);
+          process.stdout.write(JSON.stringify(payload));
           process.exit(1);
           return;
         }
       }
       const result = buildStubResponse(mode, input, diagnosticsDir, runtimeMeta);
+      if (parsed.outputFile) writeJson(parsed.outputFile, result);
       process.stdout.write(JSON.stringify(result));
     })().catch((e) => {
       const msg = e && e.message ? e.message : String(e);
-      process.stdout.write(
-        JSON.stringify({
-          ok: false,
-          phase: "error",
-          markers: {},
-          diagnostics_dir: null,
-          current_url: input.notebook_url ?? null,
-          error: msg,
-        })
-      );
+      const payload = {
+        ok: false,
+        phase: "error",
+        markers: {},
+        diagnostics_dir: null,
+        current_url: input.notebook_url ?? null,
+        error: msg,
+      };
+      if (parsed.outputFile) writeJson(parsed.outputFile, payload);
+      process.stdout.write(JSON.stringify(payload));
       process.exit(1);
     });
   } catch (e) {

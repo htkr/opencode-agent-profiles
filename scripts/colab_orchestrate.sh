@@ -233,10 +233,24 @@ PY
   local controller="${SCRIPT_DIR}/colab_control_playwright.ts"
   [[ -f "$controller" ]] || err "controller not found: $controller"
   if ! command -v pnpm >/dev/null 2>&1; then
-    err "pnpm not found. required to run Playwright controller"
+    err "pnpm not found. setup: devbox shell (if configured) and pnpm install"
   fi
-  # 実装初期段階では tsx の存在を要求する。未導入なら明示エラーにする。
-  pnpm dlx -p tsx -p playwright tsx "$controller" "$mode" --input-json "$input_json"
+  if [[ ! -f "${REPO_ROOT}/package.json" ]]; then
+    err "package.json not found. setup: pnpm install"
+  fi
+  if [[ ! -d "${REPO_ROOT}/node_modules" ]]; then
+    err "node_modules not found. run: pnpm install && pnpm exec playwright install chromium"
+  fi
+  local input_file="${STATE_DIR}/controller_input_${mode}.json"
+  local output_file="${STATE_DIR}/controller_output_${mode}.json"
+  printf '%s' "$input_json" > "$input_file"
+  local user_data_dir="${STATE_DIR}/playwright-profile"
+  pnpm exec tsx "$controller" "$mode" \
+    --input-file "$input_file" \
+    --output-file "$output_file" \
+    --user-data-dir "$user_data_dir" \
+    --browser-channel chromium
+  cat "$output_file"
 }
 
 save_ssh_connection_from_marker() {

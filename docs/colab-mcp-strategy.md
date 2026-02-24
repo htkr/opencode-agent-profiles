@@ -53,12 +53,12 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 ## Colab UI自動化のMCP選定（agent-browser / Playwright / Chrome DevTools）
 
 ### 結論（現時点）
-- 主軸: `Playwright MCP`
+- 主軸（再検討後の補助位置づけ）: `Playwright MCP` ではなく `Playwright CLI`
 - 補助（診断/デバッグ）: `Chrome DevTools MCP`
 - 非主軸: `agent-browser`
 
 理由（要点）:
-- Colab の起動/再開/終了は「再現性ある UI 操作」が主課題で、Playwright MCP が最も適合する
+- Colab の起動/再開/終了は「再現性ある UI 操作」が主課題で、最終的には `Playwright CLI` が最も適合する
 - Chrome DevTools MCP はブラウザ診断・既存セッション調査に強いが、主目的のUI操作フローの主軸には寄せすぎない
 - `agent-browser` は実装によって性質が異なり、今回欲しい「ブラウザ操作MCPそのもの」とはズレやすい
 
@@ -79,10 +79,10 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 
 ### 選定理由（この運用に対して）
 
-#### 1) Playwright MCP を主軸にする理由（推奨）
-- Colab notebook を開く、`Connect` する、指定セルを実行する、セル出力から SSH 情報を取る、という一連のUI操作を再現しやすい
-- アクセシビリティツリーに基づく操作で、単純な座標クリックより壊れにくい
-- 将来 `colab-notebook-runner` skill を作る場合に、責務を「UI制御」に集中させやすい
+#### 1) Playwright CLI を主軸にする理由（推奨・再検討後）
+- Colab notebook を開く、`Connect` する、指定セルを実行する、セル出力から SSH 情報を取る、という一連のUI操作をローカルCLIの状態機械で閉じられる
+- アクセシビリティツリーに基づく操作を使いつつ、会話には要約JSONだけ返せるためトークン効率が高い
+- 将来 `colab-notebook-runner` skill を作る場合も、責務を「UI制御CLIの起動/監督」に分離しやすい
 
 #### 2) Chrome DevTools MCP を補助に留める理由
 - コンソール/ネットワーク/DevTools診断は強い（UIドリフト時の切り分けに有効）
@@ -92,16 +92,16 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 #### 3) agent-browser を主軸にしない理由
 - 候補名が曖昧で、MCPサーバ本体ではない実装を混同しやすい
 - 今回の要件は「Colab UIをエージェントが再現可能に操作すること」であり、MCP集約器やCLI補助が先ではない
-- まずは `Playwright MCP` で最短価値を出し、MCP増加時に集約器導入を検討する方が安全
+- まずは `Playwright CLI` で最短価値を出し、MCP増加時に集約器導入を検討する方が安全
 
 ### 採用方針（段階的）
 
-#### Phase 1: Playwright MCP のみ
-- Colab UI の起動/再開/終了を Playwright MCP で自動化する
+#### Phase 1: Playwright CLI（主軸）
+- Colab UI の起動/再開/終了を Playwright CLI で自動化する
 - 失敗時はスクリーンショット・URL・DOM情報を保存して停止する（自動フォールバックしない）
 
-#### Phase 2: Chrome DevTools MCP を診断用に追加
-- Playwright MCP で失敗したケースの調査に使う
+#### Phase 2: MCP を診断用に追加
+- Playwright CLI で失敗したケースの調査に使う
 - コンソール/ネットワークを確認し、Colab UI変更や認証問題の切り分けを行う
 
 #### Phase 3: agent-browser（集約器）の再評価
@@ -109,9 +109,14 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - ただし、これは「MCP管理の整理」であり、Colab UI自動化エンジンの代替ではない
 
 ### このドキュメント内の設計境界への反映
-- `colab-notebook-runner`（将来追加候補）の標準MCPは `Playwright MCP`
-- `Chrome DevTools MCP` は診断モード時の補助MCPとして位置づける
+- `colab-notebook-runner`（将来追加候補）の標準UI制御は `Playwright CLI`
+- `Playwright MCP` / `Chrome DevTools MCP` は診断モード時の補助として位置づける
 - `agent-browser` は当面採用しない（主軸/補助ともに必須ではない）
+
+### 再検討結果（安定性・トークン効率）
+- 主経路は `Playwright CLI`（ローカルスクリプト）に統一する
+- `Playwright MCP` / `Chrome DevTools MCP` は UIドリフトや認証不具合の調査時のみ使う
+- 自動フォールバックは禁止し、CLI失敗時は診断出力を残して停止する
 
 ### 実装計画ドキュメント
 - `docs/colab-notebook-runner-implementation-plan.md`
