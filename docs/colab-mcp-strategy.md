@@ -35,8 +35,9 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - Colab SSH接続運用: `.opencode/skills/colab-ssh-attach/SKILL.md`
 
 ## Colab SSH 接続の自動化（skill + ローカルCLI）
-- Colab 側で `WORK_DIR/.colab_local/runtime/ssh_connection.json` を正本として保存する
-- ローカルでは `scripts/colab_open_ssh_wezterm.sh` を使い、wezterm優先で接続する（未導入時はコマンド表示/直接実行）
+- Colab 側では短期主経路として `trycloudflare` の hostname を出力し、ローカルへ渡す
+- ローカルでは `scripts/colab_open_ssh_wezterm.sh --host <hostname>` を使い、wezterm優先で接続する（未導入時はコマンド表示/直接実行）
+- `WORK_DIR/.colab_local/runtime/ssh_connection.json` は補助（診断/将来拡張）として保存を継続する
 - この導線は MCP ではなく skill + ローカルCLI を主とする
 
 ### 運用フェーズ（確定方針）

@@ -4,12 +4,16 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/colab_open_ssh_wezterm.sh (--json PATH | --cmd-file PATH) [--dry-run] [--print-only] [--exec-shell] [--tab-title TITLE]
+  scripts/colab_open_ssh_wezterm.sh (--host HOST | --json PATH | --cmd-file PATH) [--user USER] [--key PATH] [--proxy-command CMD] [--dry-run] [--print-only] [--exec-shell] [--tab-title TITLE]
 USAGE
 }
 
+HOST=""
 JSON_PATH=""
 CMD_FILE=""
+SSH_USER="root"
+SSH_KEY="~/.ssh/solafune_colab"
+PROXY_COMMAND='cloudflared access ssh --hostname %h'
 DRY_RUN=0
 PRINT_ONLY=0
 EXEC_SHELL=0
@@ -17,10 +21,18 @@ TAB_TITLE="colab-ssh"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --host)
+      HOST="${2:-}"; shift 2 ;;
     --json)
       JSON_PATH="${2:-}"; shift 2 ;;
     --cmd-file)
       CMD_FILE="${2:-}"; shift 2 ;;
+    --user)
+      SSH_USER="${2:-}"; shift 2 ;;
+    --key)
+      SSH_KEY="${2:-}"; shift 2 ;;
+    --proxy-command)
+      PROXY_COMMAND="${2:-}"; shift 2 ;;
     --dry-run)
       DRY_RUN=1; shift ;;
     --print-only)
@@ -38,13 +50,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$JSON_PATH" && -z "$CMD_FILE" ]]; then
-  echo "ERROR: --json or --cmd-file is required" >&2
+SOURCE_COUNT=0
+[[ -n "$HOST" ]] && SOURCE_COUNT=$((SOURCE_COUNT + 1))
+[[ -n "$JSON_PATH" ]] && SOURCE_COUNT=$((SOURCE_COUNT + 1))
+[[ -n "$CMD_FILE" ]] && SOURCE_COUNT=$((SOURCE_COUNT + 1))
+
+if [[ "$SOURCE_COUNT" -eq 0 ]]; then
+  echo "ERROR: one of --host, --json, or --cmd-file is required" >&2
   usage
   exit 1
 fi
-if [[ -n "$JSON_PATH" && -n "$CMD_FILE" ]]; then
-  echo "ERROR: specify only one of --json or --cmd-file" >&2
+if [[ "$SOURCE_COUNT" -gt 1 ]]; then
+  echo "ERROR: specify only one of --host, --json, or --cmd-file" >&2
   exit 1
 fi
 
@@ -58,7 +75,13 @@ if ! command -v cloudflared >/dev/null 2>&1; then
 fi
 
 SSH_CMD=""
-if [[ -n "$CMD_FILE" ]]; then
+if [[ -n "$HOST" ]]; then
+  if [[ -z "${HOST// }" ]]; then
+    echo "ERROR: --host is empty" >&2
+    exit 1
+  fi
+  SSH_CMD="ssh -i ${SSH_KEY} -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ProxyCommand=\"${PROXY_COMMAND}\" ${SSH_USER}@${HOST}"
+elif [[ -n "$CMD_FILE" ]]; then
   [[ -f "$CMD_FILE" ]] || { echo "ERROR: cmd file not found: $CMD_FILE" >&2; exit 1; }
   SSH_CMD="$(head -n 1 "$CMD_FILE")"
 else
