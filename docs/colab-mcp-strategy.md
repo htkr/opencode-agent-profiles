@@ -50,6 +50,69 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - `google-workspace-sync`: Drive/Docs/Sheets 連携（接続情報ファイルの受け渡し補助に使う場合はここ）
 - 将来追加候補: Colab UI自動操作または notebook 実行制御の専用 skill（例: `colab-notebook-runner`）
 
+## Colab UI自動化のMCP選定（agent-browser / Playwright / Chrome DevTools）
+
+### 結論（現時点）
+- 主軸: `Playwright MCP`
+- 補助（診断/デバッグ）: `Chrome DevTools MCP`
+- 非主軸: `agent-browser`
+
+理由（要点）:
+- Colab の起動/再開/終了は「再現性ある UI 操作」が主課題で、Playwright MCP が最も適合する
+- Chrome DevTools MCP はブラウザ診断・既存セッション調査に強いが、主目的のUI操作フローの主軸には寄せすぎない
+- `agent-browser` は実装によって性質が異なり、今回欲しい「ブラウザ操作MCPそのもの」とはズレやすい
+
+### 名前の混同に注意（重要）
+
+`agent-browser` という名前は複数の系統で使われており、用途が異なる。
+
+- `microsoft/playwright-mcp`
+  - ブラウザ操作の **MCPサーバ**
+  - 今回の主軸候補
+- `ChromeDevTools/chrome-devtools-mcp`
+  - Chrome DevTools連携の **MCPサーバ**
+  - 診断・補助用途候補
+- `vercel-labs/agent-browser`
+  - ブラウザ操作のCLI/エージェント補助寄り（MCP主軸ではない）
+- `co-browser/agent-browser`
+  - MCPサーバを束ねる管理/集約寄り（ブラウザ操作エンジンそのものではない）
+
+### 選定理由（この運用に対して）
+
+#### 1) Playwright MCP を主軸にする理由（推奨）
+- Colab notebook を開く、`Connect` する、指定セルを実行する、セル出力から SSH 情報を取る、という一連のUI操作を再現しやすい
+- アクセシビリティツリーに基づく操作で、単純な座標クリックより壊れにくい
+- 将来 `colab-notebook-runner` skill を作る場合に、責務を「UI制御」に集中させやすい
+
+#### 2) Chrome DevTools MCP を補助に留める理由
+- コンソール/ネットワーク/DevTools診断は強い（UIドリフト時の切り分けに有効）
+- 既存ブラウザセッションの調査に有利な場面がある
+- 一方で、Colabの定型UI操作の主軸をこれに寄せると、設計が診断中心になりやすい
+
+#### 3) agent-browser を主軸にしない理由
+- 候補名が曖昧で、MCPサーバ本体ではない実装を混同しやすい
+- 今回の要件は「Colab UIをエージェントが再現可能に操作すること」であり、MCP集約器やCLI補助が先ではない
+- まずは `Playwright MCP` で最短価値を出し、MCP増加時に集約器導入を検討する方が安全
+
+### 採用方針（段階的）
+
+#### Phase 1: Playwright MCP のみ
+- Colab UI の起動/再開/終了を Playwright MCP で自動化する
+- 失敗時はスクリーンショット・URL・DOM情報を保存して停止する（自動フォールバックしない）
+
+#### Phase 2: Chrome DevTools MCP を診断用に追加
+- Playwright MCP で失敗したケースの調査に使う
+- コンソール/ネットワークを確認し、Colab UI変更や認証問題の切り分けを行う
+
+#### Phase 3: agent-browser（集約器）の再評価
+- MCPが増えて運用が煩雑になった場合のみ検討する
+- ただし、これは「MCP管理の整理」であり、Colab UI自動化エンジンの代替ではない
+
+### このドキュメント内の設計境界への反映
+- `colab-notebook-runner`（将来追加候補）の標準MCPは `Playwright MCP`
+- `Chrome DevTools MCP` は診断モード時の補助MCPとして位置づける
+- `agent-browser` は当面採用しない（主軸/補助ともに必須ではない）
+
 ## セキュリティ注意
 - GitHub token / Google OAuth credential は repo に保存しない
 - Google系MCPはまず read/list で接続確認し、必要な write だけ有効化する
@@ -72,3 +135,10 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - Google OAuth 同意画面が `Testing` の場合、実行アカウントを test user に追加しないとアクセスがブロックされる
 - これは特定MCP実装の不具合ではなく、Google OAuth の運用制約
 - Drive系特化MCPに切り替えても、自前OAuthアプリを使う場合は同様の管理が必要
+
+## 参考（Colab UI自動化MCP選定）
+- Playwright MCP: `https://github.com/microsoft/playwright-mcp`
+- Chrome DevTools MCP: `https://github.com/ChromeDevTools/chrome-devtools-mcp`
+- Chrome DevTools MCP 紹介: `https://developer.chrome.com/blog/chrome-devtools-mcp-debug-your-browser-session`
+- Vercel agent-browser: `https://github.com/vercel-labs/agent-browser`
+- co-browser agent-browser: `https://github.com/co-browser/agent-browser`
