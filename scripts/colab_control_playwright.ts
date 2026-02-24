@@ -183,6 +183,13 @@ function parseMarkersFromText(text) {
   return markers;
 }
 
+function expectedMarkersForCellTag(tag, mode) {
+  if (tag === "AGENT_SSH_START") return ["COLAB_SSH_JSON"];
+  if (tag === "AGENT_TRAIN_RESUME") return ["TRAIN_STATUS_JSON"];
+  if (tag === "AGENT_SYNC_AND_STOP" || mode === "stop") return ["SYNC_STATUS_JSON"];
+  return [];
+}
+
 async function tryClick(page, candidates, opts = {}) {
   const timeoutMs = opts.timeoutMs ?? 2000;
   for (const c of candidates) {
@@ -275,6 +282,29 @@ async function runFocusedCell(page) {
   });
 }
 
+async function collectBodyText(page) {
+  return page.locator("body").innerText().catch(() => "");
+}
+
+async function waitForExpectedMarkers(page, expectedMarkers, timeoutMs) {
+  const start = Date.now();
+  let lastText = "";
+  let lastMarkers = {};
+  while (Date.now() - start < timeoutMs) {
+    lastText = await collectBodyText(page);
+    lastMarkers = parseMarkersFromText(lastText);
+    if (expectedMarkers.length === 0) {
+      return { ok: true, markers: lastMarkers, bodyText: lastText, elapsedMs: Date.now() - start };
+    }
+    const ok = expectedMarkers.every((m) => Object.prototype.hasOwnProperty.call(lastMarkers, m));
+    if (ok) {
+      return { ok: true, markers: lastMarkers, bodyText: lastText, elapsedMs: Date.now() - start };
+    }
+    await sleep(800);
+  }
+  return { ok: false, markers: lastMarkers, bodyText: lastText, elapsedMs: Date.now() - start };
+}
+
 async function executeCellsAndCollectMarkers(page, input, mode, diagnosticsDir, timeoutMs) {
   const executed = [];
   let markers = {};
@@ -287,13 +317,30 @@ async function executeCellsAndCollectMarkers(page, input, mode, diagnosticsDir, 
     }
     await runFocusedCell(page);
     executed.push(tag);
-    // Let the output render; exact completion state is notebook dependent.
-    await sleep(1200);
+    const expectedMarkers = expectedMarkersForCellTag(tag, mode);
+    const waitResult = await waitForExpectedMarkers(page, expectedMarkers, timeoutMs);
+    if (!waitResult.ok && expectedMarkers.length > 0) {
+      throw new Error(
+        `expected marker(s) not found after cell ${tag}: ${expectedMarkers.join(", ")}`
+      );
+    }
 
     // Re-snapshot principle from skill: refresh observable state after each significant UI change.
-    const bodyText = await page.locator("body").innerText().catch(() => "");
+    const bodyText = waitResult.bodyText || (await collectBodyText(page));
     pageTexts.push(`--- after ${tag} ---\n${bodyText}`);
-    markers = { ...markers, ...parseMarkersFromText(bodyText) };
+    markers = { ...markers, ...(waitResult.markers || parseMarkersFromText(bodyText)) };
+    pageTexts.push(
+      `--- marker-wait meta ${tag} ---\n` +
+        JSON.stringify(
+          {
+            expected_markers: expectedMarkers,
+            elapsed_ms: waitResult.elapsedMs,
+            found_markers: Object.keys(waitResult.markers || {}),
+          },
+          null,
+          2
+        )
+    );
   }
 
   writeText(path.join(diagnosticsDir, "page_markers_scan.txt"), pageTexts.join("\n\n"));
