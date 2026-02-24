@@ -36,6 +36,10 @@ function writeText(p, text) {
   fs.writeFileSync(p, text, "utf8");
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function parseArgs(argv) {
   if (argv.length < 3) {
     usage();
@@ -158,6 +162,154 @@ async function captureDiagnostics(page, diagnosticsDir, metaPatch = {}) {
   } catch (_) {}
 }
 
+function parseMarkersFromText(text) {
+  const markerNames = ["COLAB_SSH_JSON", "TRAIN_STATUS_JSON", "SYNC_STATUS_JSON"];
+  const markers = {};
+  for (const marker of markerNames) {
+    const pattern = new RegExp(`^${marker}:\\s*(\\{.*\\})\\s*$`, "gm");
+    let match;
+    let last = null;
+    while ((match = pattern.exec(text)) !== null) {
+      last = match[1];
+    }
+    if (last) {
+      try {
+        markers[marker] = JSON.parse(last);
+      } catch (_) {
+        // malformed JSON is ignored here; diagnostics keep raw page text
+      }
+    }
+  }
+  return markers;
+}
+
+async function tryClick(page, candidates, opts = {}) {
+  const timeoutMs = opts.timeoutMs ?? 2000;
+  for (const c of candidates) {
+    let locator;
+    try {
+      if (c.kind === "role") {
+        locator = page.getByRole(c.role, { name: c.name });
+      } else if (c.kind === "text") {
+        locator = page.getByText(c.text, { exact: !!c.exact });
+      } else if (c.kind === "selector") {
+        locator = page.locator(c.selector);
+      } else {
+        continue;
+      }
+      const count = await locator.count().catch(() => 0);
+      if (count < 1) continue;
+      const first = locator.first();
+      await first.waitFor({ state: "visible", timeout: timeoutMs }).catch(() => null);
+      await first.click({ timeout: timeoutMs });
+      return { clicked: true, candidate: c };
+    } catch (_) {
+      continue;
+    }
+  }
+  return { clicked: false, candidate: null };
+}
+
+async function waitForColabReady(page, timeoutMs) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const text = await page.locator("body").innerText().catch(() => "");
+    if (/RAM|Disk|Connected|Busy/i.test(text)) {
+      return true;
+    }
+    await sleep(1000);
+  }
+  return false;
+}
+
+async function ensureConnected(page, timeoutMs) {
+  const bodyText = await page.locator("body").innerText().catch(() => "");
+  if (/RAM|Disk|Connected/i.test(bodyText) && !/Connect to hosted runtime/i.test(bodyText)) {
+    return { connected: true, action: "already_connected" };
+  }
+
+  const clickRes = await tryClick(
+    page,
+    [
+      { kind: "role", role: "button", name: /connect/i },
+      { kind: "text", text: "Connect", exact: false },
+      { kind: "selector", selector: "colab-connect-button button" },
+      { kind: "selector", selector: "button[aria-label*='Connect']" }
+    ],
+    { timeoutMs: 3000 }
+  );
+  if (!clickRes.clicked) {
+    return { connected: false, action: "connect_button_not_found" };
+  }
+
+  const ready = await waitForColabReady(page, timeoutMs);
+  return { connected: ready, action: "clicked_connect", candidate: clickRes.candidate };
+}
+
+async function focusCellByTag(page, tag, timeoutMs) {
+  const locators = [
+    page.getByText(tag, { exact: false }),
+    page.locator(`text=${tag}`)
+  ];
+  for (const locator of locators) {
+    try {
+      const count = await locator.count().catch(() => 0);
+      if (count < 1) continue;
+      const node = locator.first();
+      await node.scrollIntoViewIfNeeded().catch(() => {});
+      await node.click({ timeout: timeoutMs });
+      // Colab cell focus sometimes needs secondary click on surrounding cell area.
+      await node.click({ timeout: timeoutMs }).catch(() => {});
+      return { ok: true };
+    } catch (_) {
+      continue;
+    }
+  }
+  return { ok: false };
+}
+
+async function runFocusedCell(page) {
+  // Colab shortcuts: Ctrl+Enter runs current cell, Shift+Enter runs and moves.
+  await page.keyboard.press("Control+Enter").catch(async () => {
+    await page.keyboard.press("Meta+Enter");
+  });
+}
+
+async function executeCellsAndCollectMarkers(page, input, mode, diagnosticsDir, timeoutMs) {
+  const executed = [];
+  let markers = {};
+  const pageTexts = [];
+
+  for (const tag of input.cell_tags || []) {
+    const focused = await focusCellByTag(page, tag, timeoutMs);
+    if (!focused.ok) {
+      throw new Error(`cell tag not found or focus failed: ${tag}`);
+    }
+    await runFocusedCell(page);
+    executed.push(tag);
+    // Let the output render; exact completion state is notebook dependent.
+    await sleep(1200);
+
+    // Re-snapshot principle from skill: refresh observable state after each significant UI change.
+    const bodyText = await page.locator("body").innerText().catch(() => "");
+    pageTexts.push(`--- after ${tag} ---\n${bodyText}`);
+    markers = { ...markers, ...parseMarkersFromText(bodyText) };
+  }
+
+  writeText(path.join(diagnosticsDir, "page_markers_scan.txt"), pageTexts.join("\n\n"));
+  let phase = "training";
+  if (mode === "stop") {
+    phase = "stopped";
+  } else if (markers.COLAB_SSH_JSON && !markers.TRAIN_STATUS_JSON) {
+    phase = "ssh_ready";
+  } else if (markers.TRAIN_STATUS_JSON) {
+    phase = markers.TRAIN_STATUS_JSON.phase || "training";
+  }
+  const lastSuccessCellTag = executed.length ? executed[executed.length - 1] : null;
+
+  return { markers, executed, phase, lastSuccessCellTag };
+}
+
 async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
   const { chromium } = require("playwright");
   const headless = input.headed === false;
@@ -202,13 +354,28 @@ async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
       }
     }
 
-    // Phase 2: 実行ボタン押下とセル実行はここに実装する。現段階では探索結果を返す。
+    const connectResult = await ensureConnected(page, runtimeOpts.timeoutMs || input.timeout_ms || 60000);
+    if (!connectResult.connected) {
+      throw new Error(`failed to connect runtime: ${connectResult.action}`);
+    }
+
+    const execResult = await executeCellsAndCollectMarkers(
+      page,
+      input,
+      mode,
+      diagnosticsDir,
+      Math.min(runtimeOpts.timeoutMs || input.timeout_ms || 60000, 5000)
+    );
+
     await captureDiagnostics(page, diagnosticsDir, {
-      step: "page_loaded",
+      step: "page_loaded_and_cells_executed",
       title,
       current_url: currentUrl,
       connect_button_visible: connectVisible,
       cell_tag_hits: cellTagHits,
+      connect_result: connectResult,
+      executed_cells: execResult.executed,
+      detected_marker_keys: Object.keys(execResult.markers),
       mode,
       browser_channel: runtimeOpts.browserChannel,
       user_data_dir: runtimeOpts.userDataDir || null,
@@ -221,6 +388,10 @@ async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
       cellTagHits,
       pageTitle: title,
       step,
+      markers: execResult.markers,
+      phase: execResult.phase,
+      lastSuccessCellTag: execResult.lastSuccessCellTag,
+      connectResult,
       browserChannel: runtimeOpts.browserChannel,
       userDataDir: runtimeOpts.userDataDir || null,
     };
@@ -239,12 +410,16 @@ async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
   }
 }
 
-function buildStubResponse(mode, input, diagnosticsDir, runtimeMeta = null) {
-  const markers = {};
+function buildResponse(mode, input, diagnosticsDir, runtimeMeta = null, forceStub = false) {
+  let markers = {};
   let phase = "training";
   let lastSuccessCellTag = "AGENT_TRAIN_RESUME";
 
-  if (mode === "stop") {
+  if (runtimeMeta && runtimeMeta.markers && Object.keys(runtimeMeta.markers).length > 0) {
+    markers = runtimeMeta.markers;
+    phase = runtimeMeta.phase || (mode === "stop" ? "stopped" : "training");
+    lastSuccessCellTag = runtimeMeta.lastSuccessCellTag || lastSuccessCellTag;
+  } else if (mode === "stop") {
     phase = "stopped";
     lastSuccessCellTag = "AGENT_SYNC_AND_STOP";
     markers.SYNC_STATUS_JSON = { phase: "sync_done", uploaded: [] };
@@ -274,7 +449,7 @@ function buildStubResponse(mode, input, diagnosticsDir, runtimeMeta = null) {
     diagnostics_dir: diagnosticsDir,
     current_url: (runtimeMeta && runtimeMeta.currentUrl) || input.notebook_url,
     error: null,
-    stub: true,
+    stub: forceStub || !(runtimeMeta && runtimeMeta.markers && Object.keys(runtimeMeta.markers).length > 0),
     runtime_meta: runtimeMeta,
   };
 }
@@ -318,7 +493,7 @@ function main() {
           return;
         }
       }
-      const result = buildStubResponse(mode, input, diagnosticsDir, runtimeMeta);
+      const result = buildResponse(mode, input, diagnosticsDir, runtimeMeta, !!(parsed.forceStub || process.env.COLAB_CONTROL_FORCE_STUB));
       if (parsed.outputFile) writeJson(parsed.outputFile, result);
       process.stdout.write(JSON.stringify(result));
     })().catch((e) => {
