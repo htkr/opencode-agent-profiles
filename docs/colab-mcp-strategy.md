@@ -39,6 +39,16 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - ローカルでは `scripts/colab_open_ssh_wezterm.sh` を使い、wezterm優先で接続する（未導入時はコマンド表示/直接実行）
 - この導線は MCP ではなく skill + ローカルCLI を主とする
 
+### 運用フェーズ（確定方針）
+- 短期（現行）: ユーザーが Colab の SSH セルを実行し、以後のローカル接続は `colab-ssh-attach` skill + CLI で自動化する
+- 長期（将来）: Colab 側のセル実行もエージェント化し、「Colab SSH まで完全自動」を目指す
+- 重要: 完全自動化の本質は Colab 制御層（UI自動化または実行API調査）であり、`colab-ssh-attach` はローカル接続導線に責務を限定する
+
+### 完全自動化へ向けた設計境界
+- `colab-ssh-attach`: ローカル端末接続（ssh_connection.json の確認、wezterm起動、接続失敗切り分け）
+- `google-workspace-sync`: Drive/Docs/Sheets 連携（接続情報ファイルの受け渡し補助に使う場合はここ）
+- 将来追加候補: Colab UI自動操作または notebook 実行制御の専用 skill（例: `colab-notebook-runner`）
+
 ## セキュリティ注意
 - GitHub token / Google OAuth credential は repo に保存しない
 - Google系MCPはまず read/list で接続確認し、必要な write だけ有効化する
