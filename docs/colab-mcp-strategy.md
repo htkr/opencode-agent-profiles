@@ -113,6 +113,10 @@ Google Colab で使う `SSH.ipynb` を、毎回手作業でアップロードせ
 - `Chrome DevTools MCP` は診断モード時の補助MCPとして位置づける
 - `agent-browser` は当面採用しない（主軸/補助ともに必須ではない）
 
+### 実装計画ドキュメント
+- `docs/colab-notebook-runner-implementation-plan.md`
+  - `colab-notebook-runner` の CLI / state JSON / セル契約 / `start|resume|stop` フロー / テスト計画を定義
+
 ## セキュリティ注意
 - GitHub token / Google OAuth credential は repo に保存しない
 - Google系MCPはまず read/list で接続確認し、必要な write だけ有効化する
