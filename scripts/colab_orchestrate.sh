@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/colab_orchestrate.sh <start|resume|stop> [options]
+  scripts/colab_orchestrate.sh <start|resume|stop|doctor> [options]
 
 Common options:
   --work-dir PATH           Working directory (default: cwd)
@@ -35,11 +35,15 @@ resume options:
 stop options:
   --state PATH              Path to session_state.json
 
+doctor options:
+  (no extra options; runs local preflight checks)
+
 Examples:
   scripts/colab_orchestrate.sh start --repo-dir . --repo owner/repo --ref main \
     --notebook-path notebooks/SSH.ipynb --exp-id exp_001 --dry-run
   scripts/colab_orchestrate.sh resume --state .colab_local/runtime/session_state.json --dry-run
   scripts/colab_orchestrate.sh stop --state .colab_local/runtime/session_state.json --dry-run
+  scripts/colab_orchestrate.sh doctor
 USAGE
 }
 
@@ -364,6 +368,12 @@ ensure_dir "$STATE_DIR"
 ensure_dir "$DIAG_DIR"
 
 case "$SUBCOMMAND" in
+  doctor)
+    preflight_script="${SCRIPT_DIR}/colab_env_preflight.sh"
+    [[ -x "$preflight_script" ]] || err "preflight script not executable: $preflight_script"
+    "$preflight_script"
+    ;;
+
   start)
     require_arg --repo-dir "$REPO_DIR"
     require_arg --repo "$REPO_SLUG"
