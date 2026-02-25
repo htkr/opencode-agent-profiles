@@ -14,7 +14,7 @@ const path = require("path");
 
 function usage() {
   console.error(
-    "Usage: scripts/colab_control_playwright.ts <start|resume|stop> (--input-json '<json>' | --input-file path) [--output-file path] [--user-data-dir path] [--browser-channel chrome|chromium] [--timeout-ms ms] [--force-stub]"
+    "Usage: scripts/colab_control_playwright.ts <start|resume|stop> (--input-json '<json>' | --input-file path) [--output-file path] [--user-data-dir path] [--browser-channel chrome|chromium] [--cdp-endpoint http://127.0.0.1:9222] [--timeout-ms ms] [--force-stub]"
   );
 }
 
@@ -56,6 +56,7 @@ function parseArgs(argv) {
   let outputFile = "";
   let userDataDir = "";
   let browserChannel = "chromium";
+  let cdpEndpoint = "";
   let timeoutMs = "";
   let forceStub = false;
   for (let i = 3; i < argv.length; i++) {
@@ -70,6 +71,8 @@ function parseArgs(argv) {
       userDataDir = argv[++i] || "";
     } else if (a === "--browser-channel") {
       browserChannel = argv[++i] || "";
+    } else if (a === "--cdp-endpoint") {
+      cdpEndpoint = argv[++i] || "";
     } else if (a === "--timeout-ms") {
       timeoutMs = argv[++i] || "";
     } else if (a === "--force-stub") {
@@ -91,7 +94,21 @@ function parseArgs(argv) {
     console.error("ERROR: --browser-channel must be chrome or chromium");
     process.exit(1);
   }
-  return { mode, inputJson, inputFile, outputFile, userDataDir, browserChannel, timeoutMs, forceStub };
+  if (cdpEndpoint && !/^https?:\/\//.test(cdpEndpoint)) {
+    console.error("ERROR: --cdp-endpoint must start with http:// or https://");
+    process.exit(1);
+  }
+  return {
+    mode,
+    inputJson,
+    inputFile,
+    outputFile,
+    userDataDir,
+    browserChannel,
+    cdpEndpoint,
+    timeoutMs,
+    forceStub,
+  };
 }
 
 function validateInput(input, mode) {
@@ -360,11 +377,33 @@ async function executeCellsAndCollectMarkers(page, input, mode, diagnosticsDir, 
 async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
   const { chromium } = require("playwright");
   const headless = input.headed === false;
-  const launchMode = runtimeOpts.browserChannel === "chrome" ? "persistent" : "ephemeral";
+  const launchMode = runtimeOpts.cdpEndpoint
+    ? "cdp"
+    : runtimeOpts.userDataDir
+      ? "persistent"
+      : "ephemeral";
   let browser = null;
   let context = null;
   let page = null;
-  if (runtimeOpts.userDataDir) {
+  if (runtimeOpts.cdpEndpoint) {
+    browser = await chromium.connectOverCDP(runtimeOpts.cdpEndpoint);
+    const contexts = browser.contexts();
+    context = contexts[0] || null;
+    if (!context) {
+      throw new Error("connectOverCDP succeeded but no browser context is available");
+    }
+    const pages = context.pages();
+    page =
+      pages.find((p) => {
+        try {
+          return /colab\.research\.google\.com/i.test(p.url() || "");
+        } catch (_) {
+          return false;
+        }
+      }) ||
+      pages[0] ||
+      (await context.newPage());
+  } else if (runtimeOpts.userDataDir) {
     context = await chromium.launchPersistentContext(runtimeOpts.userDataDir, {
       headless,
       channel: runtimeOpts.browserChannel === "chrome" ? "chrome" : undefined,
@@ -426,6 +465,7 @@ async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
       mode,
       browser_channel: runtimeOpts.browserChannel,
       user_data_dir: runtimeOpts.userDataDir || null,
+      cdp_endpoint: runtimeOpts.cdpEndpoint || null,
       launch_mode: launchMode,
     });
 
@@ -447,10 +487,16 @@ async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
       step,
       error: e && e.message ? e.message : String(e),
       mode,
+      browser_channel: runtimeOpts.browserChannel,
+      user_data_dir: runtimeOpts.userDataDir || null,
+      cdp_endpoint: runtimeOpts.cdpEndpoint || null,
+      launch_mode: launchMode,
     });
     throw e;
   } finally {
-    await context.close().catch(() => {});
+    if (launchMode !== "cdp" && context) {
+      await context.close().catch(() => {});
+    }
     if (browser) {
       await browser.close().catch(() => {});
     }
@@ -515,6 +561,7 @@ function main() {
           runtimeMeta = await openAndInspectColab(input, mode, diagnosticsDir, {
             userDataDir: parsed.userDataDir,
             browserChannel: parsed.browserChannel,
+            cdpEndpoint: parsed.cdpEndpoint,
             timeoutMs: parsed.timeoutMs ? Number(parsed.timeoutMs) : undefined,
           });
         } catch (e) {

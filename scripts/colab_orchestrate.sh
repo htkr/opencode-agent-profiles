@@ -18,6 +18,7 @@ Common options:
   --headless                UI automation in headless mode
   --diag-dir PATH           Diagnostics root dir (default: <state-dir>/diagnostics)
   --browser-channel NAME    Browser channel for Playwright UI control: chromium|chrome (default: chromium)
+  --cdp-endpoint URL        Connect to an already-open Chrome via CDP (e.g. http://127.0.0.1:9222)
 
 start options:
   --repo-dir PATH           Local git repo path
@@ -195,6 +196,7 @@ call_playwright_control() {
   local stub_last_cell="$4"
   local stub_include_ssh="$5"
   local browser_channel="$6"
+  local cdp_endpoint="$7"
 
   if [[ "$DRY_RUN" -eq 1 ]]; then
     log "dry-run: skip colab_control_playwright.ts (${mode})"
@@ -251,11 +253,15 @@ PY
   local output_file="${STATE_DIR}/controller_output_${mode}.json"
   printf '%s' "$input_json" > "$input_file"
   local user_data_dir="${STATE_DIR}/playwright-profile"
-  pnpm exec tsx "$controller" "$mode" \
+  local cmd=(pnpm exec tsx "$controller" "$mode" \
     --input-file "$input_file" \
     --output-file "$output_file" \
     --user-data-dir "$user_data_dir" \
-    --browser-channel "$browser_channel"
+    --browser-channel "$browser_channel")
+  if [[ -n "${cdp_endpoint:-}" ]]; then
+    cmd+=(--cdp-endpoint "$cdp_endpoint")
+  fi
+  "${cmd[@]}"
   cat "$output_file"
 }
 
@@ -324,6 +330,7 @@ HEADED=1
 DIAG_DIR=""
 STATE_DIR_EXPLICIT=0
 BROWSER_CHANNEL="chromium"
+CDP_ENDPOINT=""
 
 REPO_DIR=""
 REPO_SLUG=""
@@ -345,6 +352,7 @@ while [[ $# -gt 0 ]]; do
     --headless) HEADED=0; shift ;;
     --diag-dir) DIAG_DIR="${2:-}"; shift 2 ;;
     --browser-channel) BROWSER_CHANNEL="${2:-}"; shift 2 ;;
+    --cdp-endpoint) CDP_ENDPOINT="${2:-}"; shift 2 ;;
     --repo-dir) REPO_DIR="${2:-}"; shift 2 ;;
     --repo) REPO_SLUG="${2:-}"; shift 2 ;;
     --ref) REPO_REF="${2:-}"; shift 2 ;;
@@ -362,6 +370,10 @@ case "$BROWSER_CHANNEL" in
   chromium|chrome) ;;
   *) err "--browser-channel must be chromium or chrome (got: $BROWSER_CHANNEL)" ;;
 esac
+if [[ -n "$CDP_ENDPOINT" ]]; then
+  [[ "$CDP_ENDPOINT" == http://* || "$CDP_ENDPOINT" == https://* ]] || \
+    err "--cdp-endpoint must start with http:// or https:// (got: $CDP_ENDPOINT)"
+fi
 
 WORK_DIR="$(cd "$WORK_DIR" && pwd)"
 if [[ -z "$STATE_DIR" ]]; then
@@ -422,7 +434,7 @@ print(json.dumps({
 }, ensure_ascii=False))
 PY
 )"
-    CONTROL_OUT="$(call_playwright_control "start" "$START_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1" "$BROWSER_CHANNEL")"
+    CONTROL_OUT="$(call_playwright_control "start" "$START_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1" "$BROWSER_CHANNEL" "$CDP_ENDPOINT")"
 
     COLAB_SSH_JSON="$(extract_marker_json "COLAB_SSH_JSON" "$CONTROL_OUT")"
     save_ssh_connection_from_marker "$COLAB_SSH_JSON" "$NOTEBOOK_URL" "$SSH_JSON_PATH"
@@ -492,7 +504,7 @@ print(json.dumps({
 }, ensure_ascii=False))
 PY
 )"
-    CONTROL_OUT="$(call_playwright_control "resume" "$RESUME_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1" "$BROWSER_CHANNEL")"
+    CONTROL_OUT="$(call_playwright_control "resume" "$RESUME_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1" "$BROWSER_CHANNEL" "$CDP_ENDPOINT")"
     COLAB_SSH_JSON="$(extract_marker_json "COLAB_SSH_JSON" "$CONTROL_OUT")"
     save_ssh_connection_from_marker "$COLAB_SSH_JSON" "$NOTEBOOK_URL" "$SSH_JSON_PATH"
     json_merge_file "$STATE_FILE" "$(python3 - <<'PY' "$CONTROL_OUT"
@@ -535,7 +547,7 @@ print(json.dumps({
 }, ensure_ascii=False))
 PY
 )"
-    CONTROL_OUT="$(call_playwright_control "stop" "$STOP_INPUT_JSON" "stopped" "AGENT_SYNC_AND_STOP" "0" "$BROWSER_CHANNEL")"
+    CONTROL_OUT="$(call_playwright_control "stop" "$STOP_INPUT_JSON" "stopped" "AGENT_SYNC_AND_STOP" "0" "$BROWSER_CHANNEL" "$CDP_ENDPOINT")"
     python3 - "$CONTROL_OUT" <<'PY'
 import json,sys
 d=json.loads(sys.argv[1])
