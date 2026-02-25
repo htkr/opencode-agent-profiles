@@ -197,6 +197,26 @@ function parseMarkersFromText(text) {
       }
     }
   }
+  // Legacy SSH notebook support: synthesize marker from printed trycloudflare URL.
+  if (!markers.COLAB_SSH_JSON) {
+    let lastHost = null;
+    const urlPattern = /(?:https?:\/\/)?([a-z0-9-]+\.trycloudflare\.com)\b/gi;
+    let m;
+    while ((m = urlPattern.exec(text)) !== null) {
+      lastHost = m[1];
+    }
+    if (lastHost) {
+      markers.COLAB_SSH_JSON = {
+        version: 1,
+        hostname: lastHost,
+        ssh_user: "root",
+        proxy_command: "cloudflared access ssh --hostname %h",
+        ssh_key_path_hint: "~/.ssh/solafune_colab",
+        generated_at: isoNow(),
+        source: "legacy_trycloudflare_text",
+      };
+    }
+  }
   return markers;
 }
 
@@ -204,6 +224,7 @@ function expectedMarkersForCellTag(tag, mode) {
   if (tag === "AGENT_SSH_START") return ["COLAB_SSH_JSON"];
   if (tag === "AGENT_TRAIN_RESUME") return ["TRAIN_STATUS_JSON"];
   if (tag === "AGENT_SYNC_AND_STOP" || mode === "stop") return ["SYNC_STATUS_JSON"];
+  if (/SSH\s*\+\s*Keep-alive/i.test(tag) || /トンネル確認/.test(tag)) return ["COLAB_SSH_JSON"];
   return [];
 }
 
@@ -238,7 +259,13 @@ async function waitForColabReady(page, timeoutMs) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const text = await page.locator("body").innerText().catch(() => "");
-    if (/RAM|Disk|Connected|Busy/i.test(text)) {
+    const hasConnectButton =
+      (await page.getByRole("button", { name: /connect/i }).count().catch(() => 0)) > 0 ||
+      (await page.locator("colab-connect-button button").count().catch(() => 0)) > 0;
+    const runtimeSignals =
+      /RAM|Disk|ディスク|Connected|Busy|接続済み|接続中|ランタイム/i.test(text) ||
+      (await page.getByText(/RAM|ディスク|Disk|Connected|Busy|接続済み|接続中|ランタイム/i).count().catch(() => 0)) > 0;
+    if (runtimeSignals || !hasConnectButton) {
       return true;
     }
     await sleep(1000);

@@ -151,6 +151,29 @@ gen_run_id() {
   printf 'run_%s' "$(date -u +%Y%m%dT%H%M%SZ)"
 }
 
+default_cell_tags_json_for_notebook() {
+  local notebook_path="$1"
+  python3 - "$notebook_path" <<'PY'
+import json, os, sys
+p = sys.argv[1]
+base = os.path.basename(p).lower()
+if base == "ssh.ipynb":
+    tags = [
+        "1 Google Drive マウント",
+        "【セル2】SSH + Keep-alive",
+    ]
+else:
+    tags = [
+        "AGENT_BOOTSTRAP",
+        "AGENT_DRIVE_MOUNT",
+        "AGENT_DATA_PREP",
+        "AGENT_SSH_START",
+        "AGENT_TRAIN_RESUME",
+    ]
+print(json.dumps(tags, ensure_ascii=False))
+PY
+}
+
 github_colab_url() {
   local repo_slug="$1"
   local ref="$2"
@@ -415,7 +438,9 @@ case "$SUBCOMMAND" in
       run_publish_notebook "$PUBLISH_SRC_NOTEBOOK" "$REPO_DIR" "$NOTEBOOK_PATH" "$REPO_SLUG" "$REPO_REF"
     fi
 
-    START_INPUT_JSON="$(python3 - <<'PY' "$NOTEBOOK_URL" "$STATE_DIR" "$DIAG_DIR" "$RUN_ID" "$HEADED"
+    START_CELL_TAGS_JSON="$(default_cell_tags_json_for_notebook "$NOTEBOOK_PATH")"
+
+    START_INPUT_JSON="$(python3 - <<'PY' "$NOTEBOOK_URL" "$STATE_DIR" "$DIAG_DIR" "$RUN_ID" "$HEADED" "$START_CELL_TAGS_JSON"
 import json,sys
 print(json.dumps({
   "notebook_url": sys.argv[1],
@@ -424,13 +449,7 @@ print(json.dumps({
   "run_id": sys.argv[4],
   "headed": sys.argv[5] == "1",
   "phase": "start",
-  "cell_tags": [
-    "AGENT_BOOTSTRAP",
-    "AGENT_DRIVE_MOUNT",
-    "AGENT_DATA_PREP",
-    "AGENT_SSH_START",
-    "AGENT_TRAIN_RESUME"
-  ]
+  "cell_tags": json.loads(sys.argv[6])
 }, ensure_ascii=False))
 PY
 )"
@@ -484,8 +503,10 @@ PY
     require_arg state.repo_ref "$REPO_REF_STATE"
     require_arg state.exp_id "$EXP_ID_STATE"
     require_arg state.run_id "$RUN_ID"
+    NOTEBOOK_PATH_STATE="$(json_get "$STATE_FILE" "notebook_path")" || NOTEBOOK_PATH_STATE=""
+    RESUME_CELL_TAGS_JSON="$(default_cell_tags_json_for_notebook "$NOTEBOOK_PATH_STATE")"
 
-    RESUME_INPUT_JSON="$(python3 - <<'PY' "$NOTEBOOK_URL" "$STATE_DIR" "$DIAG_DIR" "$RUN_ID" "$HEADED"
+    RESUME_INPUT_JSON="$(python3 - <<'PY' "$NOTEBOOK_URL" "$STATE_DIR" "$DIAG_DIR" "$RUN_ID" "$HEADED" "$RESUME_CELL_TAGS_JSON"
 import json,sys
 print(json.dumps({
   "notebook_url": sys.argv[1],
@@ -494,13 +515,7 @@ print(json.dumps({
   "run_id": sys.argv[4],
   "headed": sys.argv[5] == "1",
   "phase": "resume",
-  "cell_tags": [
-    "AGENT_BOOTSTRAP",
-    "AGENT_DRIVE_MOUNT",
-    "AGENT_DATA_PREP",
-    "AGENT_SSH_START",
-    "AGENT_TRAIN_RESUME"
-  ]
+  "cell_tags": json.loads(sys.argv[6])
 }, ensure_ascii=False))
 PY
 )"
