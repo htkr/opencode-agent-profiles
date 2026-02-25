@@ -224,7 +224,11 @@ function expectedMarkersForCellTag(tag, mode) {
   if (tag === "AGENT_SSH_START") return ["COLAB_SSH_JSON"];
   if (tag === "AGENT_TRAIN_RESUME") return ["TRAIN_STATUS_JSON"];
   if (tag === "AGENT_SYNC_AND_STOP" || mode === "stop") return ["SYNC_STATUS_JSON"];
-  if (/SSH\s*\+\s*Keep-alive/i.test(tag) || /トンネル確認/.test(tag)) return ["COLAB_SSH_JSON"];
+  // Legacy SSH notebook:
+  // - setup cell may finish before tunnel URL appears
+  // - confirmation cell prints URL synchronously from log/file
+  if (/SSH\s*\+\s*Keep-alive/i.test(tag)) return [];
+  if (/トンネル確認/.test(tag)) return ["COLAB_SSH_JSON"];
   return [];
 }
 

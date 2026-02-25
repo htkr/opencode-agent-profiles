@@ -160,6 +160,7 @@ base = os.path.basename(p).lower()
 if base == "ssh.ipynb":
     tags = [
         "SSH + Keep-alive + 自動バックアップ",
+        "トンネル確認・再起動・接続情報表示",
     ]
 else:
     tags = [
@@ -283,7 +284,7 @@ PY
   if [[ -n "${cdp_endpoint:-}" ]]; then
     cmd+=(--cdp-endpoint "$cdp_endpoint")
   fi
-  "${cmd[@]}"
+  "${cmd[@]}" >/dev/null
   cat "$output_file"
 }
 
