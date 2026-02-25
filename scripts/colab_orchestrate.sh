@@ -17,6 +17,7 @@ Common options:
   --headed                  UI automation in headed mode (default)
   --headless                UI automation in headless mode
   --diag-dir PATH           Diagnostics root dir (default: <state-dir>/diagnostics)
+  --browser-channel NAME    Browser channel for Playwright UI control: chromium|chrome (default: chromium)
 
 start options:
   --repo-dir PATH           Local git repo path
@@ -193,6 +194,7 @@ call_playwright_control() {
   local stub_phase="$3"
   local stub_last_cell="$4"
   local stub_include_ssh="$5"
+  local browser_channel="$6"
 
   if [[ "$DRY_RUN" -eq 1 ]]; then
     log "dry-run: skip colab_control_playwright.ts (${mode})"
@@ -253,7 +255,7 @@ PY
     --input-file "$input_file" \
     --output-file "$output_file" \
     --user-data-dir "$user_data_dir" \
-    --browser-channel chromium
+    --browser-channel "$browser_channel"
   cat "$output_file"
 }
 
@@ -321,6 +323,7 @@ NO_SSH_ATTACH=0
 HEADED=1
 DIAG_DIR=""
 STATE_DIR_EXPLICIT=0
+BROWSER_CHANNEL="chromium"
 
 REPO_DIR=""
 REPO_SLUG=""
@@ -341,6 +344,7 @@ while [[ $# -gt 0 ]]; do
     --headed) HEADED=1; shift ;;
     --headless) HEADED=0; shift ;;
     --diag-dir) DIAG_DIR="${2:-}"; shift 2 ;;
+    --browser-channel) BROWSER_CHANNEL="${2:-}"; shift 2 ;;
     --repo-dir) REPO_DIR="${2:-}"; shift 2 ;;
     --repo) REPO_SLUG="${2:-}"; shift 2 ;;
     --ref) REPO_REF="${2:-}"; shift 2 ;;
@@ -353,6 +357,11 @@ while [[ $# -gt 0 ]]; do
     *) err "unknown arg: $1" ;;
   esac
 done
+
+case "$BROWSER_CHANNEL" in
+  chromium|chrome) ;;
+  *) err "--browser-channel must be chromium or chrome (got: $BROWSER_CHANNEL)" ;;
+esac
 
 WORK_DIR="$(cd "$WORK_DIR" && pwd)"
 if [[ -z "$STATE_DIR" ]]; then
@@ -413,7 +422,7 @@ print(json.dumps({
 }, ensure_ascii=False))
 PY
 )"
-    CONTROL_OUT="$(call_playwright_control "start" "$START_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1")"
+    CONTROL_OUT="$(call_playwright_control "start" "$START_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1" "$BROWSER_CHANNEL")"
 
     COLAB_SSH_JSON="$(extract_marker_json "COLAB_SSH_JSON" "$CONTROL_OUT")"
     save_ssh_connection_from_marker "$COLAB_SSH_JSON" "$NOTEBOOK_URL" "$SSH_JSON_PATH"
@@ -483,7 +492,7 @@ print(json.dumps({
 }, ensure_ascii=False))
 PY
 )"
-    CONTROL_OUT="$(call_playwright_control "resume" "$RESUME_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1")"
+    CONTROL_OUT="$(call_playwright_control "resume" "$RESUME_INPUT_JSON" "training" "AGENT_TRAIN_RESUME" "1" "$BROWSER_CHANNEL")"
     COLAB_SSH_JSON="$(extract_marker_json "COLAB_SSH_JSON" "$CONTROL_OUT")"
     save_ssh_connection_from_marker "$COLAB_SSH_JSON" "$NOTEBOOK_URL" "$SSH_JSON_PATH"
     json_merge_file "$STATE_FILE" "$(python3 - <<'PY' "$CONTROL_OUT"
@@ -526,7 +535,7 @@ print(json.dumps({
 }, ensure_ascii=False))
 PY
 )"
-    CONTROL_OUT="$(call_playwright_control "stop" "$STOP_INPUT_JSON" "stopped" "AGENT_SYNC_AND_STOP" "0")"
+    CONTROL_OUT="$(call_playwright_control "stop" "$STOP_INPUT_JSON" "stopped" "AGENT_SYNC_AND_STOP" "0" "$BROWSER_CHANNEL")"
     python3 - "$CONTROL_OUT" <<'PY'
 import json,sys
 d=json.loads(sys.argv[1])
