@@ -255,9 +255,50 @@ async function tryClick(page, candidates, opts = {}) {
   return { clicked: false, candidate: null };
 }
 
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildLooseTextRegex(text) {
+  // Allow whitespace/linebreak variation, e.g. "【セル2】 SSH" vs "【セル2】SSH".
+  const compact = text.trim().replace(/\s+/g, " ");
+  const pattern = escapeRegex(compact).replace(/\\ /g, "\\s*");
+  return new RegExp(pattern, "i");
+}
+
+async function clickNotebookWarningRunAnyway(page) {
+  const clickRes = await tryClick(
+    page,
+    [
+      { kind: "role", role: "button", name: /このまま実行/ },
+      { kind: "role", role: "button", name: /Run anyway/i },
+      { kind: "text", text: "このまま実行", exact: false },
+      { kind: "text", text: "Run anyway", exact: false },
+    ],
+    { timeoutMs: 1000 }
+  );
+  return clickRes.clicked ? clickRes : null;
+}
+
+async function clickDriveAccessDialog(page) {
+  const clickRes = await tryClick(
+    page,
+    [
+      { kind: "role", role: "button", name: /Google ドライブに接続/ },
+      { kind: "role", role: "button", name: /Connect to Google Drive/i },
+      { kind: "text", text: "Google ドライブに接続", exact: false },
+      { kind: "text", text: "Connect to Google Drive", exact: false },
+    ],
+    { timeoutMs: 1000 }
+  );
+  return clickRes.clicked ? clickRes : null;
+}
+
 async function waitForColabReady(page, timeoutMs) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
+    await clickNotebookWarningRunAnyway(page).catch(() => null);
+    await clickDriveAccessDialog(page).catch(() => null);
     const text = await page.locator("body").innerText().catch(() => "");
     const hasConnectButton =
       (await page.getByRole("button", { name: /connect/i }).count().catch(() => 0)) > 0 ||
@@ -298,8 +339,10 @@ async function ensureConnected(page, timeoutMs) {
 }
 
 async function focusCellByTag(page, tag, timeoutMs) {
+  const regex = buildLooseTextRegex(tag);
   const locators = [
     page.getByText(tag, { exact: false }),
+    page.getByText(regex),
     page.locator(`text=${tag}`)
   ];
   for (const locator of locators) {
@@ -335,6 +378,8 @@ async function waitForExpectedMarkers(page, expectedMarkers, timeoutMs) {
   let lastText = "";
   let lastMarkers = {};
   while (Date.now() - start < timeoutMs) {
+    await clickNotebookWarningRunAnyway(page).catch(() => null);
+    await clickDriveAccessDialog(page).catch(() => null);
     lastText = await collectBodyText(page);
     lastMarkers = parseMarkersFromText(lastText);
     if (expectedMarkers.length === 0) {
@@ -355,11 +400,15 @@ async function executeCellsAndCollectMarkers(page, input, mode, diagnosticsDir, 
   const pageTexts = [];
 
   for (const tag of input.cell_tags || []) {
+    await clickNotebookWarningRunAnyway(page).catch(() => null);
+    await clickDriveAccessDialog(page).catch(() => null);
     const focused = await focusCellByTag(page, tag, timeoutMs);
     if (!focused.ok) {
       throw new Error(`cell tag not found or focus failed: ${tag}`);
     }
     await runFocusedCell(page);
+    await clickNotebookWarningRunAnyway(page).catch(() => null);
+    await clickDriveAccessDialog(page).catch(() => null);
     executed.push(tag);
     const expectedMarkers = expectedMarkersForCellTag(tag, mode);
     const waitResult = await waitForExpectedMarkers(page, expectedMarkers, timeoutMs);
@@ -472,12 +521,13 @@ async function openAndInspectColab(input, mode, diagnosticsDir, runtimeOpts) {
       throw new Error(`failed to connect runtime: ${connectResult.action}`);
     }
 
+    const execTimeoutMs = runtimeOpts.timeoutMs || input.timeout_ms || 300000;
     const execResult = await executeCellsAndCollectMarkers(
       page,
       input,
       mode,
       diagnosticsDir,
-      Math.min(runtimeOpts.timeoutMs || input.timeout_ms || 60000, 5000)
+      execTimeoutMs
     );
 
     await captureDiagnostics(page, diagnosticsDir, {

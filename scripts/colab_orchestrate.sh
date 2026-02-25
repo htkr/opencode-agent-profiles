@@ -159,8 +159,7 @@ p = sys.argv[1]
 base = os.path.basename(p).lower()
 if base == "ssh.ipynb":
     tags = [
-        "1 Google Drive マウント",
-        "【セル2】SSH + Keep-alive",
+        "SSH + Keep-alive + 自動バックアップ",
     ]
 else:
     tags = [
